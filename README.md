@@ -1,4 +1,4 @@
-# GENi — Global Enterprise Neural intelligence
+# GENi — Global Enterprise Neural - intelligence
 
 **AI Automation Operating System**
 
