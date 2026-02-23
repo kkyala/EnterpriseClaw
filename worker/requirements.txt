@@ -1,0 +1,4 @@
+redis
+pydantic
+SQLAlchemy
+psycopg2-binary

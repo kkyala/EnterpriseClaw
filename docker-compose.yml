@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Enterprise Core (Control Plane)
+  # ---------------------------------------------------------------------------
+  # Python FastAPI service handling all business logic, routing, and persona management.
+  # OpenClaw (Node) forwards requests here via webhook.
+  core-api:
+    build: 
+      context: .
+      dockerfile: enterprise_core/Dockerfile
+    container_name: enterprise-core
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://user:password@db:5432/enterprise_db
+      - ENVIRONMENT=production
+    depends_on:
+      - redis
+      - db
+    networks:
+      - enterprise-net
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Background Worker (Task Processor)
+  # ---------------------------------------------------------------------------
+  # Asynchronous worker processing tasks from Redis queue.
+  # Handles tool execution, long-running workflows, and retries.
+  worker:
+    build: 
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: enterprise-worker
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://user:password@db:5432/enterprise_db
+      - PYTHONPATH=/usr/src/app
+    depends_on:
+      - redis
+      - core-api
+      - db
+    networks:
+      - enterprise-net
+    restart: always
+
+  # ---------------------------------------------------------------------------
+  # Redis (Message Broker & State)
+  # ---------------------------------------------------------------------------
+  # Task queue (Celery/RQ), Pub/Sub event bus, and ephemeral state.
+  redis:
+    image: redis:7-alpine
+    container_name: enterprise-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - enterprise-net
+    restart: always
+  
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:13-alpine
+    container_name: enterprise-db
+    environment:
+      - POSTGRES_DB=enterprise_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - enterprise-net
+    restart: always
+
+networks:
+  enterprise-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

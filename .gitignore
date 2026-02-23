@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.env
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenClaw workspace files (personal)
+SOUL.md
+USER.md
+IDENTITY.md
+AGENTS.md
+TOOLS.md
+HEARTBEAT.md
+BOOTSTRAP.md
+MEMORY.md
+MASTER_PROMPT.md
+memory/
+*.log
+
+# Node
+node_modules/
