@@ -5,51 +5,51 @@ const {
 } = MaterialUI;
 
 function ExecutionLogs({ refreshKey, isDark }) {
-    const [logs, setLogs]         = React.useState([]);
-    const [agents, setAgents]     = React.useState([]);
-    const [loading, setLoading]   = React.useState(true);
+    const [logs, setLogs] = React.useState([]);
+    const [agents, setAgents] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
     const [expanded, setExpanded] = React.useState(null);
-    const [statusF, setStatusF]   = React.useState('all');
-    const [agentF, setAgentF]     = React.useState('all');
-    const [search, setSearch]     = React.useState('');
-    const [sortCol, setSortCol]   = React.useState('time');
-    const [sortDir, setSortDir]   = React.useState('desc');
+    const [statusF, setStatusF] = React.useState('all');
+    const [agentF, setAgentF] = React.useState('all');
+    const [search, setSearch] = React.useState('');
+    const [sortCol, setSortCol] = React.useState('time');
+    const [sortDir, setSortDir] = React.useState('desc');
 
     const load = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/task-logs').then(r => r.json()),
-            fetch('/api/agents').then(r => r.json()),
+            fetch('/api/task-logs').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/agents').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([l, a]) => { setLogs(l); setAgents(a); setLoading(false); })
-          .catch(() => setLoading(false));
+            .catch(() => setLoading(false));
     };
 
     React.useEffect(load, [refreshKey]);
 
-    const bg          = isDark ? '#1e2030' : '#ffffff';
+    const bg = isDark ? '#1e2030' : '#ffffff';
     const borderColor = isDark ? '#2d3047' : '#e2e8f0';
-    const labelColor  = isDark ? '#6c7293' : '#64748b';
-    const textColor   = isDark ? '#c8cce8' : '#1e293b';
-    const tableBg     = isDark ? '#131524' : '#f8fafc';
-    const headBg      = isDark ? '#0b0d1a'  : '#e8edf5';
-    const rowHover    = isDark ? '#1a1c2e'  : '#f0f4ff';
-    const expandBg    = isDark ? '#0d0f1e'  : '#f0f4f8';
+    const labelColor = isDark ? '#6c7293' : '#64748b';
+    const textColor = isDark ? '#c8cce8' : '#1e293b';
+    const tableBg = isDark ? '#131524' : '#f8fafc';
+    const headBg = isDark ? '#0b0d1a' : '#e8edf5';
+    const rowHover = isDark ? '#1a1c2e' : '#f0f4ff';
+    const expandBg = isDark ? '#0d0f1e' : '#f0f4f8';
 
     const STATUS_COLORS = {
-        success:     { chip: 'success',  text: '#2ecc71' },
-        SUCCESS:     { chip: 'success',  text: '#2ecc71' },
-        failure:     { chip: 'error',    text: '#e74c3c' },
-        FAILURE:     { chip: 'error',    text: '#e74c3c' },
-        PENDING:     { chip: 'warning',  text: '#f39c12' },
-        QUEUED:      { chip: 'info',     text: '#4a90e2' },
-        in_progress: { chip: 'warning',  text: '#f39c12' },
+        success: { chip: 'success', text: '#2ecc71' },
+        SUCCESS: { chip: 'success', text: '#2ecc71' },
+        failure: { chip: 'error', text: '#e74c3c' },
+        FAILURE: { chip: 'error', text: '#e74c3c' },
+        PENDING: { chip: 'warning', text: '#f39c12' },
+        QUEUED: { chip: 'info', text: '#4a90e2' },
+        in_progress: { chip: 'warning', text: '#f39c12' },
     };
 
     const matchStatus = (log, f) => {
-        if (f === 'all')     return true;
-        if (f === 'success') return ['success','SUCCESS'].includes(log.status);
-        if (f === 'failure') return ['failure','FAILURE'].includes(log.status);
-        if (f === 'pending') return ['PENDING','QUEUED','in_progress'].includes(log.status);
+        if (f === 'all') return true;
+        if (f === 'success') return ['success', 'SUCCESS'].includes(log.status);
+        if (f === 'failure') return ['failure', 'FAILURE'].includes(log.status);
+        if (f === 'pending') return ['PENDING', 'QUEUED', 'in_progress'].includes(log.status);
         return true;
     };
 
@@ -57,22 +57,22 @@ function ExecutionLogs({ refreshKey, isDark }) {
         matchStatus(l, statusF) &&
         (agentF === 'all' || l.agent_name === agentF) &&
         (!search || l.agent_name.toLowerCase().includes(search.toLowerCase())
-                 || l.task_id.toLowerCase().includes(search.toLowerCase()))
+            || l.task_id.toLowerCase().includes(search.toLowerCase()))
     ).sort((a, b) => {
         let cmp = 0;
-        if (sortCol === 'time')     cmp = new Date(a.start_time) - new Date(b.start_time);
+        if (sortCol === 'time') cmp = new Date(a.start_time) - new Date(b.start_time);
         if (sortCol === 'duration') cmp = (a.duration_ms || 0) - (b.duration_ms || 0);
-        if (sortCol === 'status')   cmp = a.status.localeCompare(b.status);
-        if (sortCol === 'agent')    cmp = a.agent_name.localeCompare(b.agent_name);
+        if (sortCol === 'status') cmp = a.status.localeCompare(b.status);
+        if (sortCol === 'agent') cmp = a.agent_name.localeCompare(b.agent_name);
         return sortDir === 'desc' ? -cmp : cmp;
     });
 
     const stats = {
-        total:   filtered.length,
-        success: filtered.filter(l => ['success','SUCCESS'].includes(l.status)).length,
-        failed:  filtered.filter(l => ['failure','FAILURE'].includes(l.status)).length,
-        pending: filtered.filter(l => ['PENDING','QUEUED','in_progress'].includes(l.status)).length,
-        avgDur:  (() => {
+        total: filtered.length,
+        success: filtered.filter(l => ['success', 'SUCCESS'].includes(l.status)).length,
+        failed: filtered.filter(l => ['failure', 'FAILURE'].includes(l.status)).length,
+        pending: filtered.filter(l => ['PENDING', 'QUEUED', 'in_progress'].includes(l.status)).length,
+        avgDur: (() => {
             const valid = filtered.filter(l => l.duration_ms > 0);
             return valid.length > 0 ? Math.round(valid.reduce((a, l) => a + l.duration_ms, 0) / valid.length) : 0;
         })()
@@ -92,15 +92,15 @@ function ExecutionLogs({ refreshKey, isDark }) {
     };
 
     const exportCSV = () => {
-        const header = ['Task ID','Agent','Status','Duration(ms)','Model','Time'];
-        const rows   = filtered.map(l => [
+        const header = ['Task ID', 'Agent', 'Status', 'Duration(ms)', 'Model', 'Time'];
+        const rows = filtered.map(l => [
             l.task_id, `"${l.agent_name}"`, l.status, l.duration_ms || '',
             l.primary_model_used || '', new Date(l.start_time).toLocaleString()
         ]);
-        const csv  = [header, ...rows].map(r => r.join(',')).join('\n');
+        const csv = [header, ...rows].map(r => r.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
         a.href = url; a.download = `geni_exec_logs_${Date.now()}.csv`; a.click();
         URL.revokeObjectURL(url);
     };
@@ -138,11 +138,11 @@ function ExecutionLogs({ refreshKey, isDark }) {
             {/* Stats row */}
             <Box sx={{ display: 'flex', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
                 {[
-                    { label: 'Total',        value: stats.total,            color: textColor   },
-                    { label: '✅ Success',   value: stats.success,          color: '#2ecc71'   },
-                    { label: '❌ Failed',    value: stats.failed,           color: '#e74c3c'   },
-                    { label: '⏳ Pending',   value: stats.pending,          color: '#f39c12'   },
-                    { label: '⚡ Avg Dur',   value: `${stats.avgDur}ms`,    color: '#4a90e2'   },
+                    { label: 'Total', value: stats.total, color: textColor },
+                    { label: '✅ Success', value: stats.success, color: '#2ecc71' },
+                    { label: '❌ Failed', value: stats.failed, color: '#e74c3c' },
+                    { label: '⏳ Pending', value: stats.pending, color: '#f39c12' },
+                    { label: '⚡ Avg Dur', value: `${stats.avgDur}ms`, color: '#4a90e2' },
                 ].map((s, i) => (
                     <Box key={i} sx={{ px: 2, py: 0.9, bgcolor: bg, border: `1px solid ${borderColor}`, borderRadius: 1, textAlign: 'center', minWidth: 80 }}>
                         <Typography sx={{ fontWeight: 700, fontSize: '1.15em', color: s.color }}>{s.value}</Typography>
@@ -207,8 +207,8 @@ function ExecutionLogs({ refreshKey, isDark }) {
                                 </TableCell>
                             </TableRow>
                         ) : filtered.map(row => {
-                            const isExp  = expanded === row.task_id;
-                            const sc     = STATUS_COLORS[row.status] || {};
+                            const isExp = expanded === row.task_id;
+                            const sc = STATUS_COLORS[row.status] || {};
                             return (
                                 <React.Fragment key={row.task_id}>
                                     <TableRow hover onClick={() => setExpanded(isExp ? null : row.task_id)}
@@ -264,8 +264,8 @@ function ExecutionLogs({ refreshKey, isDark }) {
                                                             </Paper>
                                                         </Box>
                                                         <Box>
-                                                            <Typography sx={{ fontSize: '0.7em', fontWeight: 700, color: ['success','SUCCESS'].includes(row.status) ? '#2ecc71' : '#e74c3c', letterSpacing: 0.8, textTransform: 'uppercase', mb: 0.6 }}>
-                                                                {['success','SUCCESS'].includes(row.status) ? '📤 Result' : '❌ Error'}
+                                                            <Typography sx={{ fontSize: '0.7em', fontWeight: 700, color: ['success', 'SUCCESS'].includes(row.status) ? '#2ecc71' : '#e74c3c', letterSpacing: 0.8, textTransform: 'uppercase', mb: 0.6 }}>
+                                                                {['success', 'SUCCESS'].includes(row.status) ? '📤 Result' : '❌ Error'}
                                                             </Typography>
                                                             <Paper sx={{ p: 1.5, bgcolor: isDark ? '#0d0f1e' : '#f8fafc', border: `1px solid ${borderColor}` }}>
                                                                 <pre style={{ fontSize: '0.8em', color: isDark ? '#c8cce8' : '#334', margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>

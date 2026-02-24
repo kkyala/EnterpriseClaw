@@ -38,10 +38,10 @@ function Workflows({ isDark, refreshKey }) {
     const loadData = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/workflows').then(r => r.json()),
-            fetch('/api/agents').then(r => r.json()),
-            fetch('/api/skills').then(r => r.json()),
-            fetch('/api/tools').then(r => r.json()),
+            fetch('/api/workflows').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/agents').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/skills').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/tools').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([w, a, s, t]) => {
             setWorkflows(w);
             setAgents(a);

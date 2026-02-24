@@ -39,8 +39,8 @@ function Skills({ isDark, refreshKey }) {
     const loadData = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/skills').then(r => r.json()),
-            fetch('/api/agents').then(r => r.json()),
+            fetch('/api/skills').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/agents').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([s, a]) => {
             setSkills(s);
             setAgents(a);

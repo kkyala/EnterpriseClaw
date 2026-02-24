@@ -36,10 +36,10 @@ function ScheduledTasks({ isDark, refreshKey }) {
     const loadData = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/scheduled-tasks').then(r => r.json()),
-            fetch('/api/agents').then(r => r.json()),
-            fetch('/api/skills').then(r => r.json()),
-            fetch('/api/tools').then(r => r.json()),
+            fetch('/api/scheduled-tasks').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/agents').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/skills').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/tools').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([t, a, s, tl]) => { setTasks(t); setAgents(a); setSkills(s); setTools(tl); setLoading(false); })
             .catch(() => setLoading(false));
     };

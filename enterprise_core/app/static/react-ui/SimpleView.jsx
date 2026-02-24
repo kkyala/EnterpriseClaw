@@ -6,10 +6,10 @@ const {
 
 /* ─────────────────────── Create Task Dialog ─────────────────────── */
 function CreateTaskDialog({ open, onClose, defaultAgent, agents, isDark, onCreated }) {
-    const [task, setTask]           = React.useState('');
-    const [agent, setAgent]         = React.useState(defaultAgent || '');
-    const [submitting, setSubmit]   = React.useState(false);
-    const [error, setError]         = React.useState('');
+    const [task, setTask] = React.useState('');
+    const [agent, setAgent] = React.useState(defaultAgent || '');
+    const [submitting, setSubmit] = React.useState(false);
+    const [error, setError] = React.useState('');
 
     React.useEffect(() => {
         if (open) {
@@ -25,7 +25,7 @@ function CreateTaskDialog({ open, onClose, defaultAgent, agents, isDark, onCreat
 
     const handleSubmit = async () => {
         if (!task.trim()) { setError('Please enter a task description.'); return; }
-        if (!agent)       { setError('Please select an agent.'); return; }
+        if (!agent) { setError('Please select an agent.'); return; }
         setSubmit(true); setError('');
         try {
             const res = await fetch('/api/tasks', {
@@ -81,21 +81,21 @@ function CreateTaskDialog({ open, onClose, defaultAgent, agents, isDark, onCreat
 
 /* ─────────────────────── Tasks Tab ─────────────────────── */
 function SimpleView({ selectedAgent, isDark }) {
-    const [tasks, setTasks]         = React.useState([]);
-    const [agents, setAgents]       = React.useState([]);
-    const [loading, setLoading]     = React.useState(true);
+    const [tasks, setTasks] = React.useState([]);
+    const [agents, setAgents] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
     const [statusTab, setStatusTab] = React.useState('all');
-    const [agentFilter, setAgent_]  = React.useState('all');
-    const [search, setSearch]       = React.useState('');
-    const [expanded, setExpanded]   = React.useState(null);
-    const [showCreate, setCreate]   = React.useState(false);
-    const [refreshing, setRefresh]  = React.useState(false);
+    const [agentFilter, setAgent_] = React.useState('all');
+    const [search, setSearch] = React.useState('');
+    const [expanded, setExpanded] = React.useState(null);
+    const [showCreate, setCreate] = React.useState(false);
+    const [refreshing, setRefresh] = React.useState(false);
 
     const load = React.useCallback((silent = false) => {
         if (!silent) setLoading(true);
         else setRefresh(true);
         fetch('/api/task-logs').then(r => r.json()).then(d => {
-            setTasks(d);
+            setTasks(Array.isArray(d) ? d : []);
             setLoading(false);
             setRefresh(false);
         }).catch(() => { setLoading(false); setRefresh(false); });
@@ -108,31 +108,31 @@ function SimpleView({ selectedAgent, isDark }) {
 
     // Auto-refresh every 4s if there are pending/running tasks
     React.useEffect(() => {
-        const hasPending = tasks.some(t => ['QUEUED','PENDING','in_progress'].includes(t.status));
+        const hasPending = tasks.some(t => ['QUEUED', 'PENDING', 'in_progress'].includes(t.status));
         if (!hasPending) return;
         const timer = setInterval(() => load(true), 4000);
         return () => clearInterval(timer);
     }, [tasks]);
 
-    const bg          = isDark ? '#1e2030' : '#ffffff';
+    const bg = isDark ? '#1e2030' : '#ffffff';
     const borderColor = isDark ? '#2d3047' : '#e2e8f0';
-    const labelColor  = isDark ? '#6c7293' : '#64748b';
-    const textColor   = isDark ? '#c8cce8' : '#1e293b';
+    const labelColor = isDark ? '#6c7293' : '#64748b';
+    const textColor = isDark ? '#c8cce8' : '#1e293b';
 
     const STATUS_TABS = [
-        { id: 'all',      label: 'All',       color: '#4a90e2' },
-        { id: 'queued',   label: 'Queued',    color: '#4a90e2' },
-        { id: 'running',  label: 'Running',   color: '#f39c12' },
-        { id: 'success',  label: 'Completed', color: '#2ecc71' },
-        { id: 'failure',  label: 'Failed',    color: '#e74c3c' },
+        { id: 'all', label: 'All', color: '#4a90e2' },
+        { id: 'queued', label: 'Queued', color: '#4a90e2' },
+        { id: 'running', label: 'Running', color: '#f39c12' },
+        { id: 'success', label: 'Completed', color: '#2ecc71' },
+        { id: 'failure', label: 'Failed', color: '#e74c3c' },
     ];
 
     const statusMatch = (task, tabId) => {
-        if (tabId === 'all')     return true;
-        if (tabId === 'queued')  return ['QUEUED','PENDING'].includes(task.status);
+        if (tabId === 'all') return true;
+        if (tabId === 'queued') return ['QUEUED', 'PENDING'].includes(task.status);
         if (tabId === 'running') return task.status === 'in_progress';
-        if (tabId === 'success') return ['success','SUCCESS'].includes(task.status);
-        if (tabId === 'failure') return ['failure','FAILURE'].includes(task.status);
+        if (tabId === 'success') return ['success', 'SUCCESS'].includes(task.status);
+        if (tabId === 'failure') return ['failure', 'FAILURE'].includes(task.status);
         return true;
     };
 
@@ -140,7 +140,7 @@ function SimpleView({ selectedAgent, isDark }) {
         if (!statusMatch(t, statusTab)) return false;
         if (agentFilter !== 'all' && t.agent_name !== agentFilter) return false;
         if (search && !t.agent_name.toLowerCase().includes(search.toLowerCase())
-                   && !t.task_id.toLowerCase().includes(search.toLowerCase())) return false;
+            && !t.task_id.toLowerCase().includes(search.toLowerCase())) return false;
         return true;
     });
 
@@ -162,8 +162,8 @@ function SimpleView({ selectedAgent, isDark }) {
     };
 
     const statusColor = (s) => {
-        if (['success','SUCCESS'].includes(s)) return '#2ecc71';
-        if (['failure','FAILURE'].includes(s)) return '#e74c3c';
+        if (['success', 'SUCCESS'].includes(s)) return '#2ecc71';
+        if (['failure', 'FAILURE'].includes(s)) return '#e74c3c';
         if (s === 'in_progress') return '#f39c12';
         return '#4a90e2';
     };
@@ -256,8 +256,8 @@ function SimpleView({ selectedAgent, isDark }) {
                     {filtered.map(task => {
                         const req = parseRequest(task.request_payload);
                         const res = parseResponse(task.response_payload);
-                        const isSuccess = ['success','SUCCESS'].includes(task.status);
-                        const isPending = ['QUEUED','PENDING','in_progress'].includes(task.status);
+                        const isSuccess = ['success', 'SUCCESS'].includes(task.status);
+                        const isPending = ['QUEUED', 'PENDING', 'in_progress'].includes(task.status);
                         const sColor = statusColor(task.status);
                         const isExp = expanded === task.task_id;
 

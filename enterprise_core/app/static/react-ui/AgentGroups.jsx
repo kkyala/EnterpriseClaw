@@ -25,8 +25,8 @@ function AgentGroups({ isDark, refreshKey, onSwitchToComms }) {
     const loadData = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/agent-groups').then(r => r.json()),
-            fetch('/api/agents').then(r => r.json()),
+            fetch('/api/agent-groups').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch('/api/agents').then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([g, a]) => { setGroups(g); setAgents(a); setLoading(false); })
             .catch(() => setLoading(false));
     };

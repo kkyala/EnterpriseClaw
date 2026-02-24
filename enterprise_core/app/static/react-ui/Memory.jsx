@@ -49,8 +49,8 @@ function Memory({ selectedAgent, isDark }) {
         if (!agent) return;
         setLoading(true);
         Promise.all([
-            fetch(`/api/memories/${encodeURIComponent(agent)}`).then(r => r.ok ? r.json() : []).catch(() => []),
-            fetch(`/api/agent-knowledge?agent_name=${encodeURIComponent(agent)}`).then(r => r.ok ? r.json() : []).catch(() => []),
+            fetch(`/api/memories/${encodeURIComponent(agent)}`).then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
+            fetch(`/api/agent-knowledge?agent_name=${encodeURIComponent(agent)}`).then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []),
         ]).then(([m, k]) => {
             setMemories(m);
             setKnowledge(k);
