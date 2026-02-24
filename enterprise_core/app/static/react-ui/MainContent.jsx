@@ -135,12 +135,12 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
             <Box sx={{ flexGrow: 1, display: 'flex', overflow: 'hidden' }}>
                 {/* Center content */}
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2, minWidth: 0 }}>
-                    {activeTab === 0 && <Dashboard refreshKey={refreshKey} isDark={isDark} />}
-                    {activeTab === 1 && <SimpleView selectedAgent={selectedAgent} />}
-                    {activeTab === 2 && <Memory selectedAgent={selectedAgent} />}
-                    {activeTab === 3 && <ExecutionLogs refreshKey={refreshKey} />}
-                    {activeTab === 4 && <Notifications notifications={notifications} onClear={onClearNotifications} />}
-                    {activeTab === 5 && <SystemLogs events={events} />}
+                    {activeTab === 0 && <Dashboard refreshKey={refreshKey} isDark={isDark} onNavigate={id => setActiveTab(id)} />}
+                    {activeTab === 1 && <SimpleView selectedAgent={selectedAgent} isDark={isDark} />}
+                    {activeTab === 2 && <Memory selectedAgent={selectedAgent} isDark={isDark} />}
+                    {activeTab === 3 && <ExecutionLogs refreshKey={refreshKey} isDark={isDark} />}
+                    {activeTab === 4 && <Notifications notifications={notifications} onClear={onClearNotifications} isDark={isDark} />}
+                    {activeTab === 5 && <SystemLogs events={events} isDark={isDark} />}
                 </Box>
 
                 {/* Right panel — only on Dashboard tab */}

@@ -162,8 +162,8 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                             GENi
                         </Typography>
 
-                        {/* Sub-header: G E N each individually underscored */}
-                        <Box component="div" sx={{ mt: 0.4, fontSize: '0.68em', letterSpacing: 0.4, lineHeight: 1.4 }}>
+                        {/* Sub-header: G E N each individually underscored — one line */}
+                        <Box component="div" sx={{ mt: 0.4, fontSize: '0.78em', letterSpacing: 0.3, lineHeight: 1.4, whiteSpace: 'nowrap' }}>
                             <span style={{ borderBottom: '2px solid #4a90e2', paddingBottom: '1px', fontWeight: 800, color: '#4a90e2' }}>G</span>
                             <span style={{ color: subText }}>lobal </span>
                             <span style={{ borderBottom: '2px solid #9b59b6', paddingBottom: '1px', fontWeight: 800, color: '#9b59b6' }}>E</span>
