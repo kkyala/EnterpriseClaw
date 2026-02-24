@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Table, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Text, Table, ForeignKey, DateTime, Float, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
 import datetime
@@ -17,11 +17,10 @@ class Agent(Base):
     description = Column(Text)
     
     # Health and Status Monitoring Fields
-    # status = Column(String, default="online")
-    # current_model = Column(String, default="google/gemini-2.5-pro")
-    # avg_latency_ms = Column(Integer, default=250)
-    # memory_usage_mb = Column(Float, default=512.5)
-    # last_activity_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    status = Column(String, default="online")
+    current_model = Column(String, default="google/gemini-2.5-pro")
+    avg_latency_ms = Column(Integer, default=250)
+    last_activity_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Many-to-Many relationship with Tool
     tools = relationship("Tool", secondary=agent_tool_association, back_populates="agents")
@@ -56,12 +55,60 @@ class TaskLog(Base):
     token_usage = Column(Integer, nullable=True)
     estimated_cost = Column(Float, nullable=True)
 
+    # --- Sub-Task Hierarchy ---
+    parent_task_id = Column(String, ForeignKey('task_logs.task_id'), nullable=True, index=True)
+    depth = Column(Integer, default=0)  # 0 = root task, 1+ = sub-task depth
+    delegated_by = Column(String, nullable=True)  # Agent that delegated this sub-task
+
+    # Self-referential relationship for parent/child tasks
+    parent_task = relationship("TaskLog", remote_side=[task_id],
+                               backref="sub_tasks", foreign_keys=[parent_task_id])
+
+class AgentMessage(Base):
+    """Inter-agent communication messages on the agent communication bus."""
+    __tablename__ = "agent_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(String, unique=True, index=True)
+    session_id = Column(String, index=True)  # Groups messages in a conversation
+    task_id = Column(String, index=True)      # Links to the originating task
+
+    sender_agent = Column(String, index=True)
+    receiver_agent = Column(String, index=True)
+    message_type = Column(String, index=True)  # "request", "response", "delegate", "result", "broadcast"
+    
+    content = Column(Text)       # The message body (JSON-serialized)
+    metadata_json = Column(Text, nullable=True)  # Extra metadata
+    
+    status = Column(String, default="pending")  # "pending", "delivered", "processed", "failed"
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+class AgentState(Base):
+    """Tracks the execution state of an agent during a multi-step agentic loop."""
+    __tablename__ = "agent_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(String, unique=True, index=True)
+    agent_name = Column(String, index=True)
+    
+    current_step = Column(Integer, default=0)
+    max_steps = Column(Integer, default=10)
+    status = Column(String, default="thinking")  # "thinking", "acting", "observing", "delegating", "complete", "failed"
+    
+    # The accumulated reasoning trace (JSON array of step objects)
+    reasoning_trace = Column(Text, default="[]")
+    # Shared scratchpad for intermediate results
+    scratchpad = Column(Text, default="{}")
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    hashed_password = Column(String) # Placeholder for a real password hash
+    hashed_password = Column(String)
     role_id = Column(Integer, ForeignKey('roles.id'))
 
     role = relationship("Role", back_populates="users")
@@ -78,9 +125,7 @@ class Memory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     agent_name = Column(String, index=True)
-    session_id = Column(String, index=True) # To group conversations
-    role = Column(String) # "user" or "agent"
+    session_id = Column(String, index=True)
+    role = Column(String)  # "user" or "agent"
     content = Column(Text)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-
-

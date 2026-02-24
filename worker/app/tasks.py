@@ -1,122 +1,40 @@
+"""
+Background Worker — Agentic Task Processor
+=============================================
+Listens on Redis 'task_queue' and processes tasks using the full agentic pipeline:
+
+1. Dequeue task from Redis
+2. Route through the Orchestrator (which decomposes → delegates → aggregates)
+3. The Orchestrator uses the Execution Loop (ReAct: Think → Act → Observe)
+4. Agents communicate via the Communication Bus
+5. Results are persisted and events emitted in real-time
+
+Optionally delivers results back to OpenClaw via callback URL.
+"""
+
 import redis
 import json
 import time
 import sys
 import os
 import random
+import requests
 from sqlalchemy.orm import Session
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from enterprise_core.app import crud, schemas
 from enterprise_core.app.database import SessionLocal
+from enterprise_core.app.core.orchestrator import orchestrator
+from enterprise_core.app.core.execution_loop import execution_loop
+from enterprise_core.app.core.communication import comm_bus
 from common.tools import tool_registry
 
 redis_conn = redis.Redis.from_url("redis://redis:6379/0", decode_responses=True)
-print("Worker started. Listening for tasks on 'task_queue'...")
-
-# ---------------------------------------------------------------------------
-# PERSONA → TOOL ROUTING ENGINE
-# ---------------------------------------------------------------------------
-# Maps persona (agent) names to their available tools.
-# In a production system, this would be loaded from YAML persona definitions
-# and enhanced with LLM-based intent classification.
-PERSONA_TOOL_MAP = {
-    "Recruitment Agent": ["resume_analysis", "candidate_ranking"],
-    "Manufacturing Optimization Agent": ["inventory_check", "demand_forecasting"],
-    "Manufacturing Agent": ["inventory_check", "demand_forecasting"],
-    "Finance Automation Agent": ["financial_forecasting", "invoice_processing", "audit_log_check"],
-    "Finance Agent": ["financial_forecasting", "invoice_processing", "audit_log_check"],
-    "Compliance Officer": ["email_sender", "report_generator"],
-    "General Assistant": ["chat", "help"],
-}
-
-# Keyword-based intent routing (placeholder for LLM-based selection)
-KEYWORD_TOOL_MAP = {
-    "inventory": "inventory_check",
-    "stock": "inventory_check",
-    "supply": "inventory_check",
-    "forecast": "financial_forecasting",
-    "demand": "demand_forecasting",
-    "invoice": "invoice_processing",
-    "audit": "audit_log_check",
-    "resume": "resume_analysis",
-    "candidate": "candidate_ranking",
-    "hire": "candidate_ranking",
-    "recruit": "resume_analysis",
-    "email": "email_sender",
-    "send": "email_sender",
-    "report": "report_generator",
-    "generate": "report_generator",
-    "help": "help",
-}
-
-def route_task(task_description: str, persona_name: str) -> dict:
-    """
-    Routes a natural language task to a specific tool.
-    Returns: { "tool_name": str, "parameters": dict, "reasoning": str }
-    """
-    task_lower = task_description.lower()
-    
-    # Step 1: Try keyword matching against the task description
-    for keyword, tool_name in KEYWORD_TOOL_MAP.items():
-        if keyword in task_lower:
-            # Validate that this tool is appropriate for the persona
-            persona_tools = PERSONA_TOOL_MAP.get(persona_name, [])
-            if persona_tools and tool_name in persona_tools:
-                return {
-                    "tool_name": tool_name,
-                    "parameters": _build_params(tool_name, task_description),
-                    "reasoning": f"Matched keyword '{keyword}' to tool '{tool_name}' (persona-validated)"
-                }
-            elif not persona_tools:
-                # Unknown persona, allow anyway
-                return {
-                    "tool_name": tool_name,
-                    "parameters": _build_params(tool_name, task_description),
-                    "reasoning": f"Matched keyword '{keyword}' to tool '{tool_name}'"
-                }
-    
-    # Step 2: Fall back to the first tool available for this persona
-    persona_tools = PERSONA_TOOL_MAP.get(persona_name, ["chat"])
-    fallback_tool = persona_tools[0] if persona_tools else "chat"
-    return {
-        "tool_name": fallback_tool,
-        "parameters": _build_params(fallback_tool, task_description),
-        "reasoning": f"No keyword match; defaulting to persona's primary tool '{fallback_tool}'"
-    }
-
-def _build_params(tool_name: str, task_description: str) -> dict:
-    """
-    Builds the correct parameters for a given tool based on its registration.
-    Inspects the tool registry to determine what parameters are required.
-    """
-    try:
-        tool_def = tool_registry.get_tool_definition(tool_name)
-        required = tool_def.parameters.get("required", [])
-        properties = tool_def.parameters.get("properties", {})
-        
-        params = {}
-        for param_name in properties:
-            # Use smart defaults based on common parameter names
-            if param_name == "business_unit":
-                params[param_name] = "Global Operations"
-            elif param_name == "report_type":
-                params[param_name] = "quarterly_summary"
-            elif param_name == "candidate_name":
-                params[param_name] = "Candidate from task"
-            elif param_name == "recipient":
-                params[param_name] = "admin@enterprise.com"
-            elif param_name == "subject":
-                params[param_name] = task_description[:100]
-            elif param_name == "report_name":
-                params[param_name] = "Enterprise Report"
-            else:
-                params[param_name] = task_description[:200]
-        
-        return params
-    except Exception:
-        return {}
+print("=" * 60)
+print("  GENi Worker v2.0 — Agentic Task Processor")
+print("  Listening for tasks on 'task_queue'...")
+print("=" * 60)
 
 # ---------------------------------------------------------------------------
 # EVENT EMITTER
@@ -130,6 +48,52 @@ def emit_event(event_type: str, data: dict):
     }
     redis_conn.publish("events", json.dumps(event))
     print(f"[EVENT] {event_type}: task_id={data.get('task_id', 'N/A')}")
+
+# ---------------------------------------------------------------------------
+# OPENCLAW CALLBACK DELIVERY
+# ---------------------------------------------------------------------------
+def deliver_callback(callback_url: str, task_id: str, result: dict):
+    """
+    Deliver task results back to OpenClaw via HTTP callback.
+    This enables OpenClaw to act as a true executor, receiving results
+    asynchronously and presenting them to the user.
+    """
+    try:
+        payload = {
+            "task_id": task_id,
+            "status": result.get("status", "unknown"),
+            "summary": result.get("summary", ""),
+            "agent_name": result.get("agent_name", ""),
+            "execution_mode": result.get("execution_mode", ""),
+            "sub_task_count": len(result.get("sub_task_results", [])),
+            "model_used": result.get("model_used", ""),
+            "token_usage": result.get("token_usage", 0),
+            "estimated_cost": result.get("estimated_cost", 0.0),
+            "total_duration_ms": result.get("total_duration_ms", 0),
+            "execution_trace": result.get("execution_trace", []),
+            "sub_task_results": result.get("sub_task_results", []),
+        }
+        
+        response = requests.post(
+            callback_url,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10,
+        )
+        print(f"[CALLBACK] Delivered result to {callback_url} — status: {response.status_code}")
+        
+        emit_event("OPENCLAW_CALLBACK_SENT", {
+            "task_id": task_id,
+            "callback_url": callback_url,
+            "http_status": response.status_code,
+        })
+    except Exception as e:
+        print(f"[CALLBACK] Failed to deliver to {callback_url}: {e}")
+        emit_event("OPENCLAW_CALLBACK_FAILED", {
+            "task_id": task_id,
+            "callback_url": callback_url,
+            "error": str(e),
+        })
 
 # ---------------------------------------------------------------------------
 # MAIN WORKER LOOP
@@ -151,61 +115,108 @@ def main():
             
             start_time = time.time()
             task_id = job.get("task_id")
-            persona_name = job.get("persona_name", "General Assistant")
+            persona_name = job.get("persona_name", "Auto")
             task_description = job.get("task", "")
             tenant_id = job.get("tenant_id", "default")
+            session_id = job.get("session_id", "")
+            source = job.get("source", "dashboard")
+            use_orchestrator = job.get("use_orchestrator", True)
+            callback_url = job.get("callback_url")
+            initiator = job.get("initiator", "")
+
+            print(f"\n{'─' * 60}")
+            print(f"[TASK] Processing task_id={task_id}")
+            print(f"  Persona: {persona_name}")
+            print(f"  Source:  {source}")
+            print(f"  Task:    {task_description[:100]}...")
+            print(f"{'─' * 60}")
 
             # --- EMIT: TASK_STARTED ---
             emit_event("TASK_STARTED", {
                 "task_id": task_id,
                 "persona_name": persona_name,
-                "tenant_id": tenant_id
+                "tenant_id": tenant_id,
+                "source": source,
             })
 
-            # --- ROUTE TASK TO TOOL ---
-            routing_result = route_task(task_description, persona_name)
-            tool_name = routing_result["tool_name"]
-            parameters = routing_result["parameters"]
-            reasoning = routing_result["reasoning"]
-
-            print(f"[ROUTER] Task '{task_id}' -> Tool '{tool_name}' | Reason: {reasoning}")
-
             try:
-                # --- EXECUTE TOOL ---
-                result = tool_registry.execute(tool_name, parameters)
-                duration_ms = int((time.time() - start_time) * 1000)
-                
-                # Simulate model usage metadata
-                primary_model = random.choice(["google/gemini-3-pro", "anthropic/claude-4", "openai/gpt-5"])
-                token_usage = random.randint(200, 2000)
-                estimated_cost = round(token_usage * 0.00003, 4)
+                # --- PROCESS TASK VIA ORCHESTRATOR ---
+                if use_orchestrator:
+                    result = orchestrator.process_task(
+                        db=db,
+                        task_id=task_id,
+                        task_description=task_description,
+                        persona_name=persona_name,
+                        tenant_id=tenant_id,
+                        session_id=session_id,
+                        source=source,
+                    )
+                else:
+                    # Legacy: direct execution without orchestrator
+                    result = execution_loop.execute(
+                        db=db,
+                        task_id=task_id,
+                        task_description=task_description,
+                        persona_name=persona_name,
+                        tenant_id=tenant_id,
+                    )
 
-                # --- EMIT: TOOL_EXECUTED ---
-                emit_event("TOOL_EXECUTED", {
-                    "task_id": task_id,
-                    "tool_name": tool_name,
-                    "duration_ms": duration_ms
-                })
+                duration_ms = int((time.time() - start_time) * 1000)
+                status = result.get("status", "success")
 
                 # --- EMIT: TASK_COMPLETED ---
                 emit_event("TASK_COMPLETED", {
                     "task_id": task_id,
-                    "status": "success",
-                    "tool_name": tool_name,
-                    "result": result
+                    "status": status,
+                    "execution_mode": result.get("execution_mode", "single_agent"),
+                    "agent_name": result.get("agent_name", persona_name),
+                    "duration_ms": duration_ms,
+                    "sub_tasks": len(result.get("sub_task_results", [])),
                 })
                 
                 # --- UPDATE DATABASE ---
                 log_update = schemas.TaskLogUpdate(
-                    status='success',
+                    status=status,
                     response_payload=json.dumps(result),
                     duration_ms=duration_ms,
-                    primary_model_used=primary_model,
-                    token_usage=token_usage,
-                    estimated_cost=estimated_cost
+                    primary_model_used=result.get("model_used", ""),
+                    token_usage=result.get("token_usage", 0),
+                    estimated_cost=result.get("estimated_cost", 0.0),
                 )
                 crud.update_task_log(db, task_id, log_update)
-                print(f"[SUCCESS] Task '{task_id}' completed in {duration_ms}ms via '{tool_name}'")
+
+                # Update agent activity timestamp
+                crud.update_agent_activity(db, result.get("agent_name", persona_name))
+
+                print(f"[SUCCESS] Task '{task_id}' completed in {duration_ms}ms")
+                print(f"  Mode:     {result.get('execution_mode', 'single_agent')}")
+                print(f"  Agent:    {result.get('agent_name', persona_name)}")
+                print(f"  SubTasks: {len(result.get('sub_task_results', []))}")
+                print(f"  Tokens:   {result.get('token_usage', 0)}")
+
+                # --- DELIVER CALLBACK TO OPENCLAW ---
+                if callback_url:
+                    deliver_callback(callback_url, task_id, result)
+
+                # --- STORE IN MEMORY (for conversation context) ---
+                if session_id:
+                    try:
+                        # Store user message
+                        crud.create_memory(db, schemas.MemoryCreate(
+                            agent_name=result.get("agent_name", persona_name),
+                            session_id=session_id,
+                            role="user",
+                            content=task_description,
+                        ))
+                        # Store agent response
+                        crud.create_memory(db, schemas.MemoryCreate(
+                            agent_name=result.get("agent_name", persona_name),
+                            session_id=session_id,
+                            role="agent",
+                            content=result.get("summary", result.get("final_answer", "")),
+                        ))
+                    except Exception as mem_err:
+                        print(f"[WARN] Failed to store memory: {mem_err}")
 
             except Exception as e:
                 duration_ms = int((time.time() - start_time) * 1000)
@@ -214,17 +225,24 @@ def main():
                 # --- EMIT: TASK_FAILED ---
                 emit_event("TASK_FAILED", {
                     "task_id": task_id,
-                    "tool_name": tool_name,
-                    "error": error_message
+                    "error": error_message,
                 })
 
                 log_update = schemas.TaskLogUpdate(
                     status='failure',
-                    response_payload=json.dumps({"error": error_message, "tool": tool_name, "reasoning": reasoning}),
-                    duration_ms=duration_ms
+                    response_payload=json.dumps({"error": error_message}),
+                    duration_ms=duration_ms,
                 )
                 crud.update_task_log(db, task_id, log_update)
                 print(f"[FAILURE] Task '{task_id}' failed: {error_message}")
+
+                # Deliver failure callback to OpenClaw
+                if callback_url:
+                    deliver_callback(callback_url, task_id, {
+                        "status": "failure",
+                        "summary": f"Task failed: {error_message}",
+                        "agent_name": persona_name,
+                    })
 
         except Exception as e:
             print(f"[ERROR] Unexpected error in worker loop: {e}")

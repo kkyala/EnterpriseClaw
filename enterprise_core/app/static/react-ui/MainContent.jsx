@@ -1,9 +1,9 @@
 const { Box, Typography, Badge } = MaterialUI;
 
 function MainContent({ events, refreshKey, selectedAgent, notifications, onClearNotifications, isDark }) {
-    const [activeTab, setActiveTab]   = React.useState(0);
-    const [analytics, setAnalytics]   = React.useState(null);
-    const [time, setTime]             = React.useState(new Date());
+    const [activeTab, setActiveTab] = React.useState(0);
+    const [analytics, setAnalytics] = React.useState(null);
+    const [time, setTime] = React.useState(new Date());
 
     // Live clock
     React.useEffect(() => {
@@ -13,35 +13,41 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
 
     // Analytics for the ticker bar
     React.useEffect(() => {
-        fetch('/api/analytics').then(r => r.json()).then(setAnalytics).catch(() => {});
+        fetch('/api/analytics').then(r => r.json()).then(setAnalytics).catch(() => { });
     }, [refreshKey]);
 
-    const navBg     = isDark ? '#0d0f1e' : '#1a3a6e';
-    const tickerBg  = isDark ? '#0b0d1a' : '#152d58';
+    const navBg = isDark ? '#0d0f1e' : '#1a3a6e';
+    const tickerBg = isDark ? '#0b0d1a' : '#152d58';
     const borderNav = 'rgba(255,255,255,0.08)';
 
     const navItems = [
-        { label: 'Dashboard',                        id: 0 },
-        { label: 'Tasks',                            id: 1 },
-        { label: 'Memory',                           id: 2 },
-        { label: 'Exec Logs',                        id: 3 },
+        { label: 'Dashboard', id: 0 },
+        { label: 'Tasks', id: 1 },
+        { label: 'Memory', id: 2 },
+        { label: 'Exec Logs', id: 3 },
+        { label: 'Comms', id: 6 },
         { label: `Alerts${notifications.length > 0 ? ` (${notifications.length})` : ''}`, id: 4 },
-        { label: `Events${events.length       > 0 ? ` (${events.length})`       : ''}`, id: 5 },
+        { label: `Events${events.length > 0 ? ` (${events.length})` : ''}`, id: 5 },
     ];
 
+    // Count orchestrator events for comms badge
+    const orchEventCount = events.filter(e =>
+        e.event_type && (e.event_type.startsWith('ORCHESTRATOR_') || e.event_type.startsWith('AGENT_MESSAGE'))
+    ).length;
+
     const tickerItems = analytics ? [
-        { label: 'Tasks Today',  value: analytics.kpis?.tasks_today ?? 0,            color: '#4a90e2', dir: '▲' },
+        { label: 'Tasks Today', value: analytics.kpis?.tasks_today ?? 0, color: '#4a90e2', dir: '▲' },
         { label: 'Success Rate', value: `${(analytics.kpis?.success_rate ?? 0).toFixed(1)}%`, color: (analytics.kpis?.success_rate ?? 0) >= 70 ? '#2ecc71' : '#e74c3c', dir: (analytics.kpis?.success_rate ?? 0) >= 70 ? '▲' : '▼' },
-        { label: 'Cost Today',   value: `$${(analytics.kpis?.cost_today  ?? 0).toFixed(2)}`,  color: '#f39c12', dir: '▲' },
-        { label: 'Sys Events',   value: events.length,                                color: '#1abc9c', dir: '▲' },
-        { label: 'Alerts',       value: notifications.length,                         color: notifications.length > 0 ? '#e74c3c' : '#6c7293', dir: notifications.length > 0 ? '▲' : '▼' },
-        { label: 'Active WS',    value: 'Connected',                                  color: '#2ecc71', dir: '●' },
+        { label: 'Cost Today', value: `$${(analytics.kpis?.cost_today ?? 0).toFixed(2)}`, color: '#f39c12', dir: '▲' },
+        { label: 'Sys Events', value: events.length, color: '#1abc9c', dir: '▲' },
+        { label: 'Agent Comms', value: orchEventCount, color: '#9b59b6', dir: orchEventCount > 0 ? '▲' : '●' },
+        { label: 'Active WS', value: 'Connected', color: '#2ecc71', dir: '●' },
     ] : [];
 
     return (
         <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
-            {/* ── Top Navigation Bar (Dhan-style) ── */}
+            {/* ── Top Navigation Bar ── */}
             <Box sx={{
                 bgcolor: navBg,
                 display: 'flex', alignItems: 'stretch', justifyContent: 'space-between',
@@ -53,7 +59,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {navItems.map((item) => (
                         <Box key={item.id} onClick={() => setActiveTab(item.id)}
                             sx={{
-                                px: 1.4, display: 'flex', alignItems: 'center',
+                                px: 1.4, display: 'flex', alignItems: 'center', gap: 0.5,
                                 cursor: 'pointer', position: 'relative',
                                 color: activeTab === item.id ? '#4a90e2' : 'rgba(255,255,255,0.65)',
                                 fontWeight: activeTab === item.id ? 700 : 400,
@@ -68,6 +74,15 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                                 } : {})
                             }}>
                             {item.label}
+                            {item.id === 6 && orchEventCount > 0 && (
+                                <Box sx={{
+                                    width: 16, height: 16, borderRadius: '50%',
+                                    bgcolor: '#9b59b6', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.6em', color: '#fff', fontWeight: 700
+                                }}>
+                                    {orchEventCount > 9 ? '9+' : orchEventCount}
+                                </Box>
+                            )}
                         </Box>
                     ))}
                 </Box>
@@ -124,6 +139,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {activeTab === 3 && <ExecutionLogs refreshKey={refreshKey} isDark={isDark} />}
                     {activeTab === 4 && <Notifications notifications={notifications} onClear={onClearNotifications} isDark={isDark} />}
                     {activeTab === 5 && <SystemLogs events={events} isDark={isDark} />}
+                    {activeTab === 6 && <AgentComm refreshKey={refreshKey} isDark={isDark} events={events} />}
                 </Box>
 
                 {/* Right panel — only on Dashboard tab */}

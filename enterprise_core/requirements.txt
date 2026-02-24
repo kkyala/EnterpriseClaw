@@ -8,3 +8,6 @@ aioredis
 SQLAlchemy
 psycopg2-binary
 websockets
+google-generativeai
+openai
+requests

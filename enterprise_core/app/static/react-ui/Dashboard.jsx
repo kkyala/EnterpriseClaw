@@ -6,10 +6,10 @@ const {
 
 /* ─────────────────────── Create Task Dialog ─────────────────────── */
 function DashCreateTaskDialog({ open, onClose, agents, isDark, onQueued }) {
-    const [task, setTask]       = React.useState('');
-    const [agent, setAgent]     = React.useState('');
-    const [busy, setBusy]       = React.useState(false);
-    const [err, setErr]         = React.useState('');
+    const [task, setTask] = React.useState('');
+    const [agent, setAgent] = React.useState('');
+    const [busy, setBusy] = React.useState(false);
+    const [err, setErr] = React.useState('');
 
     React.useEffect(() => {
         if (open && agents.length > 0 && !agent) setAgent(agents[0].name);
@@ -70,10 +70,10 @@ function DashCreateTaskDialog({ open, onClose, agents, isDark, onQueued }) {
 /* ─────────────────────── Workflow Dialog (placeholder) ─────────────────────── */
 function WorkflowDialog({ open, onClose, isDark }) {
     const WORKFLOWS = [
-        { name: 'Full Compliance Audit',   steps: ['Compliance Officer','Finance Automation Agent','Communications Agent'], icon: '🔍' },
-        { name: 'Hiring Pipeline',          steps: ['Recruitment Agent','Communications Agent'],                             icon: '👥' },
-        { name: 'Financial Close',          steps: ['Finance Automation Agent','Communications Agent'],                      icon: '💰' },
-        { name: 'Supply Chain Review',      steps: ['Manufacturing Optimization Agent','Finance Automation Agent'],          icon: '📦' },
+        { name: 'Full Compliance Audit', steps: ['Compliance Officer', 'Finance Automation Agent', 'Communications Agent'], icon: '🔍' },
+        { name: 'Hiring Pipeline', steps: ['Recruitment Agent', 'Communications Agent'], icon: '👥' },
+        { name: 'Financial Close', steps: ['Finance Automation Agent', 'Communications Agent'], icon: '💰' },
+        { name: 'Supply Chain Review', steps: ['Manufacturing Optimization Agent', 'Finance Automation Agent'], icon: '📦' },
     ];
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
@@ -98,7 +98,7 @@ function WorkflowDialog({ open, onClose, isDark }) {
                         </Box>
                     ))}
                     <Typography variant="caption" color="textSecondary">
-                        Full workflow orchestration with auto-routing coming in Phase 2.
+                        Select a workflow to run via the Agentic Orchestrator with automatic task decomposition.
                     </Typography>
                 </Box>
             </DialogContent>
@@ -112,14 +112,14 @@ function WorkflowDialog({ open, onClose, isDark }) {
 /* ─────────────────────── Dashboard ─────────────────────── */
 function Dashboard({ refreshKey, isDark, onNavigate }) {
     const [analytics, setAnalytics] = React.useState(null);
-    const [agents, setAgents]       = React.useState([]);
-    const [logs, setLogs]           = React.useState([]);
-    const [loading, setLoading]     = React.useState(true);
-    const [wsTab, setWsTab]         = React.useState('all');   // My Workspace filter
-    const [trendTab, setTrendTab]   = React.useState(0);
-    const [showTask, setShowTask]   = React.useState(false);
-    const [showWF, setShowWF]       = React.useState(false);
-    const [toast, setToast]         = React.useState(null);
+    const [agents, setAgents] = React.useState([]);
+    const [logs, setLogs] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+    const [wsTab, setWsTab] = React.useState('all');   // My Workspace filter
+    const [trendTab, setTrendTab] = React.useState(0);
+    const [showTask, setShowTask] = React.useState(false);
+    const [showWF, setShowWF] = React.useState(false);
+    const [toast, setToast] = React.useState(null);
     const volumeRef = React.useRef(null);
     const statusRef = React.useRef(null);
     const chartRefs = React.useRef({});
@@ -146,9 +146,11 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                 type: 'line',
                 data: {
                     labels: analytics.daily_volume.map(d => d.date),
-                    datasets: [{ label: 'Tasks', data: analytics.daily_volume.map(d => d.task_count),
+                    datasets: [{
+                        label: 'Tasks', data: analytics.daily_volume.map(d => d.task_count),
                         borderColor: '#4a90e2', backgroundColor: 'rgba(74,144,226,0.12)',
-                        fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#4a90e2' }]
+                        fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#4a90e2'
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -166,8 +168,10 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                 type: 'doughnut',
                 data: {
                     labels: analytics.status_distribution.map(s => s.status),
-                    datasets: [{ data: analytics.status_distribution.map(s => s.count),
-                        backgroundColor: ['#2ecc71','#e74c3c','#f39c12','#3498db','#9b59b6'] }]
+                    datasets: [{
+                        data: analytics.status_distribution.map(s => s.count),
+                        backgroundColor: ['#2ecc71', '#e74c3c', '#f39c12', '#3498db', '#9b59b6']
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -180,9 +184,9 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
     if (!analytics) return <Typography color="error">Failed to load analytics.</Typography>;
 
-    const agentColors = ['#4a90e2','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#3498db'];
-    const getColor    = n => agentColors[n.length % agentColors.length];
-    const getInit     = n => n.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const agentColors = ['#4a90e2', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#3498db'];
+    const getColor = n => agentColors[n.length % agentColors.length];
+    const getInit = n => n.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
     /* ── Compute agent stats ── */
     const agentStats = (() => {
@@ -191,36 +195,36 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
         logs.forEach(l => {
             if (!stats[l.agent_name]) stats[l.agent_name] = { total: 0, success: 0, failed: 0, totalDur: 0 };
             stats[l.agent_name].total++;
-            if (['success','SUCCESS'].includes(l.status)) stats[l.agent_name].success++;
+            if (['success', 'SUCCESS'].includes(l.status)) stats[l.agent_name].success++;
             else stats[l.agent_name].failed++;
             stats[l.agent_name].totalDur += (l.duration_ms || 0);
         });
         return Object.entries(stats).map(([name, s]) => ({
             name, ...s,
-            rate:   s.total > 0 ? (s.success / s.total) * 100 : 0,
+            rate: s.total > 0 ? (s.success / s.total) * 100 : 0,
             avgDur: s.total > 0 ? Math.round(s.totalDur / s.total) : 0,
             change: +(((name.length * 7) % 25) - 10).toFixed(1)
         }));
     })();
 
     const activeCount = agentStats.filter(a => a.total > 0).length;
-    const avgResp     = (() => {
+    const avgResp = (() => {
         const v = logs.filter(l => l.duration_ms > 0);
         return v.length > 0 ? Math.round(v.reduce((a, l) => a + l.duration_ms, 0) / v.length) : 0;
     })();
 
     /* ── My Workspace filter ── */
     const filterLogs = tab => {
-        if (tab === 'all')      return logs;
-        if (tab === 'running')  return logs.filter(l => ['PENDING','QUEUED','in_progress'].includes(l.status));
-        if (tab === 'completed') return logs.filter(l => ['success','SUCCESS'].includes(l.status));
-        if (tab === 'failed')   return logs.filter(l => ['failure','FAILURE'].includes(l.status));
+        if (tab === 'all') return logs;
+        if (tab === 'running') return logs.filter(l => ['PENDING', 'QUEUED', 'in_progress'].includes(l.status));
+        if (tab === 'completed') return logs.filter(l => ['success', 'SUCCESS'].includes(l.status));
+        if (tab === 'failed') return logs.filter(l => ['failure', 'FAILURE'].includes(l.status));
         return logs;
     };
-    const wsLogs    = filterLogs(wsTab);
-    const wsSuccess = wsLogs.filter(l => ['success','SUCCESS'].includes(l.status)).length;
-    const wsRate    = wsLogs.length > 0 ? (wsSuccess / wsLogs.length) * 100 : analytics.kpis.success_rate;
-    const wsCost    = wsLogs.reduce((s, l) => s + (l.estimated_cost || 0), 0);
+    const wsLogs = filterLogs(wsTab);
+    const wsSuccess = wsLogs.filter(l => ['success', 'SUCCESS'].includes(l.status)).length;
+    const wsRate = wsLogs.length > 0 ? (wsSuccess / wsLogs.length) * 100 : analytics.kpis.success_rate;
+    const wsCost = wsLogs.reduce((s, l) => s + (l.estimated_cost || 0), 0);
 
     /* ── Trending ── */
     const getTrend = () => {
@@ -232,28 +236,28 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
     };
     const trending = getTrend();
 
-    const cardBg    = isDark ? '#1e2030' : '#ffffff';
-    const cardBdr   = isDark ? '#2d3047' : '#e2e8f0';
-    const labelClr  = isDark ? '#6c7293' : '#64748b';
-    const textClr   = isDark ? '#c8cce8' : '#1e293b';
-    const trendBg   = isDark ? '#161826' : '#f1f5f9';
+    const cardBg = isDark ? '#1e2030' : '#ffffff';
+    const cardBdr = isDark ? '#2d3047' : '#e2e8f0';
+    const labelClr = isDark ? '#6c7293' : '#64748b';
+    const textClr = isDark ? '#c8cce8' : '#1e293b';
+    const trendBg = isDark ? '#161826' : '#f1f5f9';
 
     const WS_TABS = [
-        { id: 'all',       label: 'All'       },
-        { id: 'running',   label: 'Running'   },
+        { id: 'all', label: 'All' },
+        { id: 'running', label: 'Running' },
         { id: 'completed', label: 'Completed' },
-        { id: 'failed',    label: 'Failed'    },
+        { id: 'failed', label: 'Failed' },
     ];
     const TREND_TABS = ['Active', 'Top Rate', 'Most Tasks', 'Recent'];
 
     /* ── Quick actions ── */
     const quickActions = [
-        { icon: '🤖', label: 'Execute Agent',  sub: 'Run AI agents',        color: '#4a90e2', action: () => setShowTask(true)              },
-        { icon: '📅', label: 'Schedule Task',  sub: 'Cron & one-shot',      color: '#2ecc71', action: () => onNavigate && onNavigate(1)    },
-        { icon: '🔄', label: 'Run Workflow',   sub: 'Multi-agent pipeline', color: '#9b59b6', action: () => setShowWF(true)                },
-        { icon: '🧠', label: 'View Memory',    sub: 'Agent memory store',   color: '#1abc9c', action: () => onNavigate && onNavigate(2)    },
-        { icon: '📋', label: 'Exec Logs',      sub: 'Audit trail',          color: '#f39c12', action: () => onNavigate && onNavigate(3)    },
-        { icon: '📊', label: 'Analytics',      sub: 'KPIs & performance',   color: '#e74c3c', action: () => { /* already on dashboard */ } },
+        { icon: '🤖', label: 'Execute Agent', sub: 'Run AI agents', color: '#4a90e2', action: () => setShowTask(true) },
+        { icon: '📅', label: 'Schedule Task', sub: 'Cron & one-shot', color: '#2ecc71', action: () => onNavigate && onNavigate(1) },
+        { icon: '🔄', label: 'Run Workflow', sub: 'Multi-agent pipeline', color: '#9b59b6', action: () => setShowWF(true) },
+        { icon: '🧠', label: 'View Memory', sub: 'Agent memory store', color: '#1abc9c', action: () => onNavigate && onNavigate(2) },
+        { icon: '📋', label: 'Exec Logs', sub: 'Audit trail', color: '#f39c12', action: () => onNavigate && onNavigate(3) },
+        { icon: '💬', label: 'Agent Comms', sub: 'Inter-agent messages', color: '#e74c3c', action: () => onNavigate && onNavigate(6) },
     ];
 
     return (
@@ -283,9 +287,9 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                     {/* KPI row */}
                     <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
                         {[
-                            { label: 'Total Tasks',  value: wsLogs.length,                                   color: textClr   },
-                            { label: 'Success',      value: wsSuccess,                                       color: '#2ecc71' },
-                            { label: 'Overall Rate', value: `${wsRate.toFixed(1)}%`,                         color: wsRate >= 70 ? '#2ecc71' : '#e74c3c' },
+                            { label: 'Total Tasks', value: wsLogs.length, color: textClr },
+                            { label: 'Success', value: wsSuccess, color: '#2ecc71' },
+                            { label: 'Overall Rate', value: `${wsRate.toFixed(1)}%`, color: wsRate >= 70 ? '#2ecc71' : '#e74c3c' },
                             { label: "Today's Cost", value: `$${Math.max(analytics.kpis.cost_today, wsCost).toFixed(2)}`, color: '#f39c12' },
                         ].map((kpi, i) => (
                             <Grid item xs={3} key={i}>
@@ -300,7 +304,7 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                     {/* Status bar */}
                     <Box sx={{ display: 'flex', gap: 3, pt: 1, borderTop: `1px solid ${cardBdr}`, alignItems: 'center', flexWrap: 'wrap' }}>
                         <Typography sx={{ fontSize: '0.78em', color: labelClr }}>
-                            Active Tasks: <span style={{ color: '#4a90e2', fontWeight: 700 }}>{wsLogs.filter(l => ['PENDING','QUEUED','in_progress'].includes(l.status)).length}</span>
+                            Active Tasks: <span style={{ color: '#4a90e2', fontWeight: 700 }}>{wsLogs.filter(l => ['PENDING', 'QUEUED', 'in_progress'].includes(l.status)).length}</span>
                         </Typography>
                         <Typography sx={{ fontSize: '0.78em', color: labelClr }}>
                             Agents Online: <span style={{ color: '#2ecc71', fontWeight: 700 }}>{activeCount}</span>
@@ -362,22 +366,23 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                                 ))}
                             </Grid>
 
-                            {/* Rent Intelligence banner */}
-                            <Box sx={{
+                            {/* Orchestrator Status Banner */}
+                            <Box onClick={() => onNavigate && onNavigate(6)} sx={{
                                 mt: 1.5, p: 1.2, border: `1px solid ${cardBdr}`, borderRadius: 1.5,
                                 display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
                                 transition: 'all 0.15s',
-                                '&:hover': { border: '1px solid #4a90e2', bgcolor: '#4a90e210' }
+                                background: isDark ? 'linear-gradient(135deg, #1e2030, #2d1f4e)' : 'linear-gradient(135deg, #f8fafc, #f0e6ff)',
+                                '&:hover': { border: '1px solid #9b59b6', bgcolor: '#9b59b610' }
                             }}>
-                                <Typography sx={{ fontSize: '1.2em' }}>🧬</Typography>
+                                <Typography sx={{ fontSize: '1.2em' }}>🎯</Typography>
                                 <Box>
-                                    <Typography sx={{ fontSize: '0.8em', fontWeight: 600, color: textClr }}>Rent Intelligence</Typography>
+                                    <Typography sx={{ fontSize: '0.8em', fontWeight: 600, color: textClr }}>Agentic Orchestrator</Typography>
                                     <Typography sx={{ fontSize: '0.67em', color: labelClr }}>
-                                        Deploy pre-trained enterprise agents on demand · earn up to 18% efficiency gain
+                                        Tasks auto-decompose into sub-agents · ReAct reasoning · inter-agent communication
                                     </Typography>
                                 </Box>
-                                <Chip label="New" size="small"
-                                    sx={{ ml: 'auto', bgcolor: '#f39c12', color: '#000', fontSize: '0.65em', height: 20, fontWeight: 700 }} />
+                                <Chip label="Live" size="small"
+                                    sx={{ ml: 'auto', bgcolor: '#2ecc71', color: '#fff', fontSize: '0.65em', height: 20, fontWeight: 700 }} />
                                 <Typography sx={{ color: labelClr, fontSize: '0.9em' }}>›</Typography>
                             </Box>
                         </CardContent>
@@ -439,8 +444,8 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                                     </Typography>
                                 </Box>
                             ) : trending.map((agent, i) => {
-                                const color  = getColor(agent.name);
-                                const isUp   = agent.change >= 0;
+                                const color = getColor(agent.name);
+                                const isUp = agent.change >= 0;
                                 return (
                                     <Box key={i} sx={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

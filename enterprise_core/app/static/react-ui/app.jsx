@@ -54,12 +54,29 @@ function App() {
             try {
                 const data = JSON.parse(event.data);
                 setEvents(prev => [data, ...prev].slice(0, 200));
+
+                // ── Task lifecycle events ──
                 if (data.event_type === 'TASK_COMPLETED') {
-                    addNotification('success', `Task completed via ${data.tool_name || 'tool'} (task:${(data.task_id || '').substring(0, 8)})`);
+                    const mode = data.execution_mode === 'multi_agent' ? '🎯 Orchestrated' : '🤖 Direct';
+                    addNotification('success', `${mode} task completed via ${data.agent_name || 'agent'} (${(data.task_id || '').substring(0, 8)}…) — ${data.duration_ms || 0}ms`);
                     setRefreshKey(prev => prev + 1);
                 } else if (data.event_type === 'TASK_FAILED') {
-                    addNotification('error', `Task failed: ${data.error || 'unknown'} (task:${(data.task_id || '').substring(0, 8)})`);
+                    addNotification('error', `Task failed: ${data.error || 'unknown'} (${(data.task_id || '').substring(0, 8)}…)`);
                     setRefreshKey(prev => prev + 1);
+                }
+                // ── Orchestrator events ──
+                else if (data.event_type === 'ORCHESTRATOR_COMPLETED') {
+                    const subs = data.sub_tasks_count || 0;
+                    if (subs > 0) {
+                        addNotification('info', `🎯 Orchestration complete: ${subs} sub-task(s) in ${data.total_duration_ms || 0}ms`);
+                    }
+                }
+                else if (data.event_type === 'ORCHESTRATOR_SUB_TASK_COMPLETED') {
+                    addNotification('info', `📤 Sub-task ${data.sub_task_number || '?'} done → ${data.target_agent || 'agent'}`);
+                }
+                // ── Agent message events ──
+                else if (data.event_type === 'AGENT_MESSAGE_SENT') {
+                    // Silent — visible in Comms tab
                 }
             } catch (e) { console.error('[WS] Parse error:', e); }
         };
@@ -68,13 +85,25 @@ function App() {
     }, []);
 
     const pollForResult = async (taskId) => {
-        for (let i = 0; i < 15; i++) {
-            await new Promise(r => setTimeout(r, 1000));
+        for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 1500));
             try {
-                const logs = await (await fetch('/api/task-logs')).json();
-                const task = logs.find(l => l.task_id === taskId);
-                if (task && task.status !== 'QUEUED' && task.status !== 'PENDING') return task;
-            } catch {} 
+                // Try the new status endpoint first
+                const statusRes = await fetch(`/v1/openclaw/task/${taskId}/status`);
+                if (statusRes.ok) {
+                    const status = await statusRes.json();
+                    if (status.status && !['QUEUED', 'PENDING', 'in_progress'].includes(status.status)) {
+                        return status;
+                    }
+                }
+            } catch {
+                // Fallback to task-logs
+                try {
+                    const logs = await (await fetch('/api/task-logs')).json();
+                    const task = logs.find(l => l.task_id === taskId);
+                    if (task && task.status !== 'QUEUED' && task.status !== 'PENDING') return task;
+                } catch { }
+            }
         }
         return null;
     };
@@ -87,13 +116,18 @@ function App() {
             });
             if (!response.ok) throw new Error((await response.json()).detail || 'Error');
             const result = await response.json();
-            addNotification('info', `Task queued for ${agentName} (${result.task_id.substring(0, 8)}...)`);
+            addNotification('info', `Task queued → ${agentName} (${result.task_id.substring(0, 8)}…)`);
             const taskResult = await pollForResult(result.task_id);
             if (taskResult) {
-                if (taskResult.status === 'success') {
-                    try { const p = JSON.parse(taskResult.response_payload); addNotification('success', `${agentName}: ${p.message || p.status || 'Completed'}`); }
-                    catch { addNotification('success', `Task completed by ${agentName}`); }
-                } else { addNotification('error', `Task failed for ${agentName}`); }
+                if (taskResult.status === 'success' || taskResult.status === 'partial_success') {
+                    const summary = taskResult.result?.summary || taskResult.summary || '';
+                    const mode = taskResult.result?.execution_mode === 'multi_agent' ? '🎯' : '🤖';
+                    const subCount = taskResult.sub_tasks?.length || 0;
+                    const subInfo = subCount > 0 ? ` (${subCount} sub-tasks)` : '';
+                    addNotification('success', `${mode} ${agentName}: ${summary.substring(0, 100) || 'Completed'}${subInfo}`);
+                } else {
+                    addNotification('error', `Task failed for ${agentName}`);
+                }
                 setRefreshKey(prev => prev + 1);
             }
         } catch (error) { addNotification('error', `Failed: ${error.message}`); }

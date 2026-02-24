@@ -45,8 +45,10 @@ function AddAgentDialog({ open, onClose, onAgentCreated }) {
         if (!description.trim()) { setError('Description is required'); return; }
         setError(''); setSaving(true);
         try {
-            const response = await fetch('/api/agents', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name.trim(), description: description.trim(), tool_names: selectedTools }) });
+            const response = await fetch('/api/agents', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name.trim(), description: description.trim(), tool_names: selectedTools })
+            });
             if (!response.ok) throw new Error((await response.json()).detail || 'Failed');
             onAgentCreated(await response.json()); resetForm(); onClose();
         } catch (err) { setError(err.message); } finally { setSaving(false); }
@@ -95,16 +97,17 @@ function AddAgentDialog({ open, onClose, onAgentCreated }) {
 
 /* ─────────────────────── AGENT ICONS ─────────────────────── */
 const AGENT_ICONS = {
-    'recruitment':    '👥',
-    'hr':             '👥',
-    'manufacturing':  '🏭',
-    'supply':         '📦',
-    'general':        '🤖',
-    'finance':        '💰',
-    'compliance':     '🛡️',
+    'recruitment': '👥',
+    'hr': '👥',
+    'manufacturing': '🏭',
+    'supply': '📦',
+    'general': '🤖',
+    'finance': '💰',
+    'compliance': '🛡️',
     'communications': '📧',
-    'test':           '🧪',
-    'data':           '📊',
+    'test': '🧪',
+    'data': '📊',
+    'orchestrator': '🎯',
 };
 
 function getAgentIcon(name) {
@@ -131,21 +134,20 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
 
     const handleTaskSubmit = () => {
         if (!task.trim()) { alert("Please describe the task."); return; }
-        const agentName = selectedAgent || (agents.length > 0 ? agents[0].name : 'General Assistant');
-        if (!selectedAgent && agents.length > 0) setSelectedAgent(agents[0].name);
+        const agentName = selectedAgent || 'Auto';
         onTaskSubmit(task, agentName);
         setTask('');
     };
 
     const handleAgentCreated = (newAgent) => { setAgents(prev => [...prev, newAgent]); setSelectedAgent(newAgent.name); };
 
-    const sidebarBg  = isDark ? '#131524' : '#f1f5f9';
+    const sidebarBg = isDark ? '#131524' : '#f1f5f9';
     const borderColor = isDark ? '#1e2030' : '#e2e8f0';
-    const inputBg    = isDark ? '#1a1c2e' : '#ffffff';
+    const inputBg = isDark ? '#1a1c2e' : '#ffffff';
     const labelColor = isDark ? '#6c7293' : '#64748b';
-    const textColor  = isDark ? '#c8cce8' : '#1e293b';
-    const subText    = isDark ? '#8a8eb5' : '#64748b';
-    const footerBg   = isDark ? '#0b0d1a' : '#e2e8f0';
+    const textColor = isDark ? '#c8cce8' : '#1e293b';
+    const subText = isDark ? '#8a8eb5' : '#64748b';
+    const footerBg = isDark ? '#0b0d1a' : '#e2e8f0';
 
     const categories = ['All', 'HR', 'Finance', 'Supply', 'Comms', 'Custom'];
 
@@ -153,20 +155,20 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
         !search || a.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const agentColors = ['#4a90e2','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#3498db'];
-    const getColor    = (name) => agentColors[name.length % agentColors.length];
+    const agentColors = ['#4a90e2', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#3498db'];
+    const getColor = (name) => agentColors[name.length % agentColors.length];
     const getInitials = (name) => name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
     const getPerf = (agent) => {
         const h = agent.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-        const rate   = 45 + (h % 50);
+        const rate = 45 + (h % 50);
         const change = -12 + (h % 25);
         return { rate, change, isUp: change >= 0 };
     };
 
     const FULL_W = 300;
     const MINI_W = 56;
-    const sideW  = collapsed ? MINI_W : FULL_W;
+    const sideW = collapsed ? MINI_W : FULL_W;
 
     /* ═══════ COLLAPSED VIEW ═══════ */
     if (collapsed) {
@@ -203,7 +205,7 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                     {loading ? <CircularProgress size={18} sx={{ mt: 2 }} /> : filteredAgents.map(agent => {
                         const color = getColor(agent.name);
                         const isSel = selectedAgent === agent.name;
-                        const icon  = getAgentIcon(agent.name);
+                        const icon = getAgentIcon(agent.name);
                         return (
                             <Tooltip key={agent.name} title={agent.name} placement="right">
                                 <Box onClick={() => setSelectedAgent(agent.name)}
@@ -356,7 +358,7 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                             const perf = getPerf(agent);
                             const color = getColor(agent.name);
                             const isSel = selectedAgent === agent.name;
-                            const icon  = getAgentIcon(agent.name);
+                            const icon = getAgentIcon(agent.name);
                             return (
                                 <ListItem key={agent.name} button onClick={() => setSelectedAgent(agent.name)}
                                     sx={{
@@ -415,15 +417,23 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                 <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, display: 'block', mb: 0.6, fontSize: '0.58em', textTransform: 'uppercase' }}>
                     Dispatch Task
                 </Typography>
-                {selectedAgent && <Chip label={selectedAgent} size="small" color="primary" sx={{ mb: 0.6, fontSize: '0.65em', height: 20 }} />}
-                <TextField multiline rows={2} fullWidth placeholder="Describe the task..."
+                <Box sx={{ display: 'flex', gap: 0.5, mb: 0.6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {selectedAgent ? (
+                        <Chip label={selectedAgent} size="small" color="primary" sx={{ fontSize: '0.65em', height: 20 }}
+                            onDelete={() => setSelectedAgent(null)} />
+                    ) : (
+                        <Chip label="🎯 Auto (Orchestrator)" size="small"
+                            sx={{ fontSize: '0.65em', height: 20, bgcolor: '#9b59b620', color: '#9b59b6', border: '1px solid #9b59b644', fontWeight: 600 }} />
+                    )}
+                </Box>
+                <TextField multiline rows={2} fullWidth placeholder="Describe the task…"
                     value={task} onChange={(e) => setTask(e.target.value)}
                     onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTaskSubmit(); } }}
                     variant="outlined" size="small"
                     sx={{ mb: 0.6, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.78em' } }} />
                 <Button variant="contained" fullWidth onClick={handleTaskSubmit} size="small"
                     sx={{ background: 'linear-gradient(135deg, #4a90e2, #6c5ce7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.72em' }}>
-                    Execute Task
+                    {selectedAgent ? 'Execute Task' : '🎯 Auto-Route Task'}
                 </Button>
             </Box>
 

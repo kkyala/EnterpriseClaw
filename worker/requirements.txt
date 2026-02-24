@@ -2,3 +2,8 @@ redis
 pydantic
 SQLAlchemy
 psycopg2-binary
+requests
+google-generativeai
+openai
+PyYAML
+python-dotenv
