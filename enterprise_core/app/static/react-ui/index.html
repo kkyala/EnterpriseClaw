@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,15 +10,48 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 
     <style>
-        :root { --scrollbar-track: #1e202f; --scrollbar-thumb: #4a5568; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4a90e2; }
-        * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
-        body { margin: 0; padding: 0; overflow: hidden; }
-        #root { height: calc(100vh - 3px); }
-        .gradient-accent { background: linear-gradient(135deg, #4a90e2, #9b59b6, #e74c3c); height: 3px; }
+        :root {
+            --scrollbar-track: #1e202f;
+            --scrollbar-thumb: #4a5568;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #root {
+            height: calc(100vh - 3px);
+        }
+
+        .gradient-accent {
+            background: linear-gradient(135deg, #4a90e2, #9b59b6, #e74c3c);
+            height: 3px;
+        }
     </style>
 
     <!-- React -->
@@ -26,7 +60,8 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- MUI -->
-    <script src="https://cdn.jsdelivr.net/npm/@mui/material@5.15.21/umd/material-ui.development.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mui/material@5.15.21/umd/material-ui.development.js"
+        crossorigin></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -39,13 +74,19 @@
     <script type="text/babel" src="/static/react-ui/SystemLogs.jsx"></script>
     <script type="text/babel" src="/static/react-ui/Notifications.jsx"></script>
     <script type="text/babel" src="/static/react-ui/AgentComm.jsx"></script>
+    <script type="text/babel" src="/static/react-ui/Skills.jsx"></script>
+    <script type="text/babel" src="/static/react-ui/Workflows.jsx"></script>
+    <script type="text/babel" src="/static/react-ui/ScheduledTasks.jsx"></script>
+    <script type="text/babel" src="/static/react-ui/AgentGroups.jsx"></script>
     <script type="text/babel" src="/static/react-ui/RightPanel.jsx"></script>
     <script type="text/babel" src="/static/react-ui/Sidebar.jsx"></script>
     <script type="text/babel" src="/static/react-ui/MainContent.jsx"></script>
     <script type="text/babel" src="/static/react-ui/app.jsx"></script>
 </head>
+
 <body>
     <div class="gradient-accent"></div>
     <div id="root"></div>
 </body>
+
 </html>

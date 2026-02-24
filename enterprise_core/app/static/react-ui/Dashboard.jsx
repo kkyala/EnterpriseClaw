@@ -253,10 +253,10 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
     /* ── Quick actions ── */
     const quickActions = [
         { icon: '🤖', label: 'Execute Agent', sub: 'Run AI agents', color: '#4a90e2', action: () => setShowTask(true) },
-        { icon: '📅', label: 'Schedule Task', sub: 'Cron & one-shot', color: '#2ecc71', action: () => onNavigate && onNavigate(1) },
-        { icon: '🔄', label: 'Run Workflow', sub: 'Multi-agent pipeline', color: '#9b59b6', action: () => setShowWF(true) },
-        { icon: '🧠', label: 'View Memory', sub: 'Agent memory store', color: '#1abc9c', action: () => onNavigate && onNavigate(2) },
-        { icon: '📋', label: 'Exec Logs', sub: 'Audit trail', color: '#f39c12', action: () => onNavigate && onNavigate(3) },
+        { icon: '📅', label: 'Schedule Task', sub: 'Cron & one-shot', color: '#2ecc71', action: () => onNavigate && onNavigate(9) },
+        { icon: '🔄', label: 'Workflows', sub: 'Build pipelines', color: '#9b59b6', action: () => onNavigate && onNavigate(8) },
+        { icon: '🎯', label: 'Skills', sub: 'Manage capabilities', color: '#1abc9c', action: () => onNavigate && onNavigate(7) },
+        { icon: '👥', label: 'Agent Groups', sub: 'Team management', color: '#f39c12', action: () => onNavigate && onNavigate(10) },
         { icon: '💬', label: 'Agent Comms', sub: 'Inter-agent messages', color: '#e74c3c', action: () => onNavigate && onNavigate(6) },
     ];
 

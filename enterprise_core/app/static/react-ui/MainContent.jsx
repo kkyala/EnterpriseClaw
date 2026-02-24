@@ -21,13 +21,17 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
     const borderNav = 'rgba(255,255,255,0.08)';
 
     const navItems = [
-        { label: 'Dashboard', id: 0 },
-        { label: 'Tasks', id: 1 },
-        { label: 'Memory', id: 2 },
-        { label: 'Exec Logs', id: 3 },
-        { label: 'Comms', id: 6 },
-        { label: `Alerts${notifications.length > 0 ? ` (${notifications.length})` : ''}`, id: 4 },
-        { label: `Events${events.length > 0 ? ` (${events.length})` : ''}`, id: 5 },
+        { label: 'Dashboard', id: 0, icon: '📊' },
+        { label: 'Tasks', id: 1, icon: '⚡' },
+        { label: 'Memory', id: 2, icon: '🧠' },
+        { label: 'Exec Logs', id: 3, icon: '📋' },
+        { label: 'Skills', id: 7, icon: '🎯' },
+        { label: 'Workflows', id: 8, icon: '🔄' },
+        { label: 'Schedule', id: 9, icon: '📅' },
+        { label: 'Groups', id: 10, icon: '👥' },
+        { label: 'Comms', id: 6, icon: '💬' },
+        { label: `Alerts${notifications.length > 0 ? ` (${notifications.length})` : ''}`, id: 4, icon: '🔔' },
+        { label: `Events${events.length > 0 ? ` (${events.length})` : ''}`, id: 5, icon: '📡' },
     ];
 
     // Count orchestrator events for comms badge
@@ -59,11 +63,11 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {navItems.map((item) => (
                         <Box key={item.id} onClick={() => setActiveTab(item.id)}
                             sx={{
-                                px: 1.4, display: 'flex', alignItems: 'center', gap: 0.5,
+                                px: 1.2, display: 'flex', alignItems: 'center', gap: 0.4,
                                 cursor: 'pointer', position: 'relative',
                                 color: activeTab === item.id ? '#4a90e2' : 'rgba(255,255,255,0.65)',
                                 fontWeight: activeTab === item.id ? 700 : 400,
-                                fontSize: '0.82em', whiteSpace: 'nowrap', flexShrink: 0,
+                                fontSize: '0.78em', whiteSpace: 'nowrap', flexShrink: 0,
                                 userSelect: 'none', transition: 'color 0.15s',
                                 '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.05)' },
                                 ...(activeTab === item.id ? {
@@ -140,6 +144,10 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {activeTab === 4 && <Notifications notifications={notifications} onClear={onClearNotifications} isDark={isDark} />}
                     {activeTab === 5 && <SystemLogs events={events} isDark={isDark} />}
                     {activeTab === 6 && <AgentComm refreshKey={refreshKey} isDark={isDark} events={events} />}
+                    {activeTab === 7 && <Skills isDark={isDark} refreshKey={refreshKey} />}
+                    {activeTab === 8 && <Workflows isDark={isDark} refreshKey={refreshKey} />}
+                    {activeTab === 9 && <ScheduledTasks isDark={isDark} refreshKey={refreshKey} />}
+                    {activeTab === 10 && <AgentGroups isDark={isDark} refreshKey={refreshKey} />}
                 </Box>
 
                 {/* Right panel — only on Dashboard tab */}
