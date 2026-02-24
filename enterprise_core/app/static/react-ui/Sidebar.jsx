@@ -1,5 +1,5 @@
 const {
-    Card, Typography, Button, TextField, List, ListItem, ListItemText,
+    Typography, Button, TextField, List, ListItem,
     CircularProgress, Box, Select, MenuItem, FormControl, Chip, Divider,
     Dialog, DialogTitle, DialogContent, DialogActions, FormGroup, FormControlLabel,
     Checkbox, InputLabel
@@ -98,6 +98,8 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
     const [loading, setLoading] = React.useState(true);
     const [task, setTask] = React.useState('');
     const [addDialogOpen, setAddDialogOpen] = React.useState(false);
+    const [search, setSearch] = React.useState('');
+    const [categoryTab, setCategoryTab] = React.useState(0);
 
     React.useEffect(() => {
         fetch('/api/agents').then(r => r.json()).then(d => { setAgents(d); setLoading(false); }).catch(() => setLoading(false));
@@ -113,37 +115,73 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
 
     const handleAgentCreated = (newAgent) => { setAgents(prev => [...prev, newAgent]); setSelectedAgent(newAgent.name); };
 
-    const sidebarBg = isDark ? '#1a1c2e' : '#f1f5f9';
-    const borderColor = isDark ? '#2d3047' : '#e2e8f0';
-    const hoverBg = isDark ? '#222438' : '#e2e8f0';
-    const selectedBg = isDark ? '#252740' : '#dbeafe';
-    const inputBg = isDark ? '#252740' : '#ffffff';
+    const sidebarBg  = isDark ? '#131524' : '#f1f5f9';
+    const borderColor = isDark ? '#1e2030' : '#e2e8f0';
+    const inputBg    = isDark ? '#1a1c2e' : '#ffffff';
     const labelColor = isDark ? '#6c7293' : '#64748b';
-    const dispatchBg = isDark ? '#1e2030' : '#e2e8f0';
+    const textColor  = isDark ? '#c8cce8' : '#1e293b';
+    const subText    = isDark ? '#8a8eb5' : '#64748b';
+    const footerBg   = isDark ? '#0b0d1a' : '#e2e8f0';
+
+    const categories = ['All', 'HR', 'Finance', 'Supply', 'Comms', 'Custom'];
+
+    const filteredAgents = agents.filter(a =>
+        !search || a.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const agentColors = ['#4a90e2','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#3498db'];
+    const getColor    = (name) => agentColors[name.length % agentColors.length];
+    const getInitials = (name) => name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    // Deterministic simulated performance per agent (seeded by name)
+    const getPerf = (agent) => {
+        const h = agent.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const rate   = 45 + (h % 50);
+        const change = -12 + (h % 25);
+        return { rate, change, isUp: change >= 0 };
+    };
 
     return (
         <Box sx={{
-            width: 340, minWidth: 340, bgcolor: sidebarBg,
+            width: 320, minWidth: 320,
+            bgcolor: sidebarBg,
             display: 'flex', flexDirection: 'column',
-            borderRight: `1px solid ${borderColor}`
+            borderRight: `1px solid ${borderColor}`,
+            overflow: 'hidden'
         }}>
-            {/* Header */}
-            <Box sx={{ p: 2, borderBottom: `1px solid ${borderColor}` }}>
+            {/* ── Header ── */}
+            <Box sx={{ p: '12px 16px', borderBottom: `1px solid ${borderColor}` }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    {/* Brand */}
                     <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: 0.5, background: 'linear-gradient(135deg, #4a90e2, #9b59b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>GENi</Typography>
-                        <Typography variant="body2" sx={{ color: labelColor, fontSize: '0.75em', display: 'block', mt: 0.3 }}>
-                            Global Enterprise Neural <span style={{ textDecoration: 'underline', textDecorationColor: '#4a90e2', fontWeight: 600 }}>Intelligence</span>
+                        <Typography sx={{
+                            fontWeight: 900, fontSize: '1.55em', letterSpacing: 1, lineHeight: 1,
+                            background: 'linear-gradient(135deg, #4a90e2, #9b59b6, #e74c3c)',
+                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                        }}>
+                            GENi
                         </Typography>
+
+                        {/* Sub-header: G E N each individually underscored */}
+                        <Box component="div" sx={{ mt: 0.4, fontSize: '0.68em', letterSpacing: 0.4, lineHeight: 1.4 }}>
+                            <span style={{ borderBottom: '2px solid #4a90e2', paddingBottom: '1px', fontWeight: 800, color: '#4a90e2' }}>G</span>
+                            <span style={{ color: subText }}>lobal </span>
+                            <span style={{ borderBottom: '2px solid #9b59b6', paddingBottom: '1px', fontWeight: 800, color: '#9b59b6' }}>E</span>
+                            <span style={{ color: subText }}>nterprise </span>
+                            <span style={{ borderBottom: '2px solid #e74c3c', paddingBottom: '1px', fontWeight: 800, color: '#e74c3c' }}>N</span>
+                            <span style={{ color: subText }}>eural - intelligence</span>
+                        </Box>
                     </Box>
+
+                    {/* Controls */}
                     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                         <Button size="small" onClick={() => setIsDark(!isDark)}
-                            sx={{ minWidth: 32, fontSize: '1em', p: 0.5 }}>
+                            sx={{ minWidth: 28, p: 0.5, fontSize: '1em' }}>
                             {isDark ? '☀️' : '🌙'}
                         </Button>
-                        <FormControl size="small">
+                        <FormControl size="small" sx={{ minWidth: 80 }}>
                             <Select value={currentUser} onChange={(e) => setCurrentUser(e.target.value)}
-                                sx={{ fontSize: '0.75em', '.MuiOutlinedInput-notchedOutline': { borderColor } }}>
+                                sx={{ fontSize: '0.7em', height: 28, '.MuiOutlinedInput-notchedOutline': { borderColor } }}>
                                 <MenuItem value="viewer_user">Viewer</MenuItem>
                                 <MenuItem value="analyst_user">Analyst</MenuItem>
                                 <MenuItem value="admin_user">Admin</MenuItem>
@@ -151,58 +189,131 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                         </FormControl>
                     </Box>
                 </Box>
+
+                {/* Search bar */}
+                <TextField
+                    placeholder="Search for agents to deploy..."
+                    size="small" fullWidth value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.8em' } }}
+                    InputProps={{ startAdornment: <span style={{ marginRight: 6, color: labelColor }}>🔍</span> }}
+                />
             </Box>
 
-            {/* Agent List */}
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1.5 }}>
-                    <Typography variant="overline" sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5 }}>AI WORKFORCE</Typography>
+            {/* ── Category tabs + section header ── */}
+            <Box sx={{ px: 1.5, pt: 1, pb: 0.5, borderBottom: `1px solid ${borderColor}` }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
+                    <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, fontSize: '0.62em', textTransform: 'uppercase' }}>
+                        AI Workforce
+                    </Typography>
                     <Button size="small" variant="outlined" onClick={() => setAddDialogOpen(true)}
-                        sx={{ fontSize: '0.7em', minWidth: 'auto', borderColor: '#4a90e2', color: '#4a90e2', py: 0.3, px: 1 }}>+ ADD</Button>
+                        sx={{ fontSize: '0.65em', minWidth: 'auto', borderColor: '#4a90e2', color: '#4a90e2', py: 0.2, px: 0.8 }}>
+                        + ADD
+                    </Button>
                 </Box>
-                <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
-                    {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress size={24} /></Box>
-                    ) : (
-                        <List sx={{ py: 0 }}>
-                            {agents.map((agent) => (
-                                <ListItem button key={agent.name} selected={selectedAgent === agent.name}
-                                    onClick={() => setSelectedAgent(agent.name)}
-                                    sx={{ py: 1.5, px: 2,
-                                        borderLeft: selectedAgent === agent.name ? '3px solid #4a90e2' : '3px solid transparent',
-                                        '&.Mui-selected': { bgcolor: selectedBg }, '&:hover': { bgcolor: hoverBg } }}>
-                                    <ListItemText
-                                        primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>{agent.name}</Typography>}
-                                        secondary={
-                                            <React.Fragment>
-                                                <Typography variant="caption" sx={{ color: labelColor, display: 'block', mb: 0.5 }}>{agent.description}</Typography>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.3 }}>
-                                                    {agent.tools && agent.tools.map(tool => (
-                                                        <Chip key={tool.name} label={tool.name} size="small"
-                                                            sx={{ fontSize: '0.6em', height: 18, bgcolor: isDark ? '#2d3047' : '#e2e8f0', color: isDark ? '#8a8eb5' : '#475569' }} />
-                                                    ))}
-                                                </Box>
-                                            </React.Fragment>
-                                        }
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
+                <Box sx={{ display: 'flex', gap: 0.5, pb: 0.5, overflowX: 'auto', '&::-webkit-scrollbar': { height: 2 } }}>
+                    {categories.map((cat, i) => (
+                        <Box key={cat} onClick={() => setCategoryTab(i)}
+                            sx={{
+                                px: 1.2, py: 0.4, borderRadius: 1, cursor: 'pointer',
+                                fontSize: '0.68em', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                                bgcolor: categoryTab === i ? '#4a90e2' : (isDark ? '#1e2030' : '#e2e8f0'),
+                                color: categoryTab === i ? '#fff' : labelColor,
+                                transition: 'all 0.15s',
+                            }}>
+                            {cat}
+                        </Box>
+                    ))}
                 </Box>
             </Box>
 
-            {/* Dispatch Task */}
-            <Box sx={{ borderTop: `1px solid ${borderColor}`, p: 2, bgcolor: dispatchBg }}>
-                <Typography variant="overline" sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, display: 'block', mb: 1 }}>DISPATCH TASK</Typography>
-                {selectedAgent && <Chip label={selectedAgent} size="small" color="primary" sx={{ mb: 1, fontSize: '0.75em' }} />}
+            {/* ── Agent list (watchlist style) ── */}
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress size={24} /></Box>
+                ) : filteredAgents.length === 0 ? (
+                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                        <Typography variant="body2" color="textSecondary">No agents found</Typography>
+                    </Box>
+                ) : (
+                    <List sx={{ py: 0 }} dense>
+                        {filteredAgents.map((agent) => {
+                            const perf = getPerf(agent);
+                            const color = getColor(agent.name);
+                            const isSel = selectedAgent === agent.name;
+                            return (
+                                <ListItem key={agent.name} button onClick={() => setSelectedAgent(agent.name)}
+                                    sx={{
+                                        py: 1, px: 1.5,
+                                        borderLeft: isSel ? `3px solid ${color}` : '3px solid transparent',
+                                        bgcolor: isSel ? (isDark ? '#1a2040' : '#dbeafe') : 'transparent',
+                                        borderBottom: `1px solid ${borderColor}`,
+                                        '&:hover': { bgcolor: isDark ? '#1a1c2e' : '#f0f4ff' }
+                                    }}>
+                                    {/* Avatar circle */}
+                                    <Box sx={{
+                                        width: 34, height: 34, borderRadius: '50%', bgcolor: color,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        mr: 1.2, flexShrink: 0
+                                    }}>
+                                        <Typography sx={{ color: '#fff', fontSize: '0.68em', fontWeight: 800 }}>
+                                            {getInitials(agent.name)}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Name + tools */}
+                                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                                        <Typography sx={{ fontSize: '0.82em', fontWeight: 600, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {agent.name}
+                                        </Typography>
+                                        <Typography sx={{ fontSize: '0.64em', color: labelColor }}>
+                                            {agent.tools ? `${agent.tools.length} tools` : 'No tools'} · AI Core
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Performance */}
+                                    <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                                        <Typography sx={{ fontSize: '0.82em', fontWeight: 700, color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
+                                            {perf.rate}%
+                                        </Typography>
+                                        <Typography sx={{ fontSize: '0.63em', color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
+                                            {perf.isUp ? '▲' : '▼'} {Math.abs(perf.change)}%
+                                        </Typography>
+                                    </Box>
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                )}
+            </Box>
+
+            {/* ── Column footer ── */}
+            <Box sx={{
+                px: 1.5, py: 0.8, borderTop: `1px solid ${borderColor}`,
+                display: 'flex', justifyContent: 'space-between',
+                bgcolor: footerBg
+            }}>
+                <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Agent Name</Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Rate</Typography>
+                    <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Chg%</Typography>
+                    <Typography sx={{ fontSize: '0.63em', color: labelColor }}>⚙</Typography>
+                </Box>
+            </Box>
+
+            {/* ── Dispatch Task ── */}
+            <Box sx={{ borderTop: `1px solid ${borderColor}`, p: 1.5, bgcolor: footerBg }}>
+                <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, display: 'block', mb: 0.8, fontSize: '0.6em', textTransform: 'uppercase' }}>
+                    Dispatch Task
+                </Typography>
+                {selectedAgent && <Chip label={selectedAgent} size="small" color="primary" sx={{ mb: 0.8, fontSize: '0.7em' }} />}
                 <TextField multiline rows={2} fullWidth placeholder="Describe the task..."
                     value={task} onChange={(e) => setTask(e.target.value)}
                     onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTaskSubmit(); } }}
                     variant="outlined" size="small"
-                    sx={{ mb: 1, '& .MuiOutlinedInput-root': { bgcolor: inputBg } }} />
-                <Button variant="contained" fullWidth onClick={handleTaskSubmit}
-                    sx={{ background: 'linear-gradient(135deg, #4a90e2, #6c5ce7)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    sx={{ mb: 0.8, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.8em' } }} />
+                <Button variant="contained" fullWidth onClick={handleTaskSubmit} size="small"
+                    sx={{ background: 'linear-gradient(135deg, #4a90e2, #6c5ce7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.75em' }}>
                     Execute Task
                 </Button>
             </Box>
