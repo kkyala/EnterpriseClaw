@@ -46,20 +46,19 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                 bgcolor: navBg,
                 display: 'flex', alignItems: 'stretch', justifyContent: 'space-between',
                 borderBottom: `1px solid ${borderNav}`,
-                minHeight: 48, flexShrink: 0
+                minHeight: 46, flexShrink: 0, overflow: 'hidden'
             }}>
-                {/* Nav items */}
-                <Box sx={{ display: 'flex', alignItems: 'stretch' }}>
+                {/* Nav items — scrollable if needed */}
+                <Box sx={{ display: 'flex', alignItems: 'stretch', overflowX: 'auto', '&::-webkit-scrollbar': { height: 0 } }}>
                     {navItems.map((item) => (
                         <Box key={item.id} onClick={() => setActiveTab(item.id)}
                             sx={{
-                                px: 2.5, display: 'flex', alignItems: 'center',
+                                px: 2, display: 'flex', alignItems: 'center',
                                 cursor: 'pointer', position: 'relative',
                                 color: activeTab === item.id ? '#4a90e2' : 'rgba(255,255,255,0.65)',
                                 fontWeight: activeTab === item.id ? 700 : 400,
-                                fontSize: '0.84em',
-                                userSelect: 'none',
-                                transition: 'color 0.15s',
+                                fontSize: '0.82em', whiteSpace: 'nowrap', flexShrink: 0,
+                                userSelect: 'none', transition: 'color 0.15s',
                                 '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.05)' },
                                 ...(activeTab === item.id ? {
                                     '&::after': {
@@ -73,60 +72,44 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     ))}
                 </Box>
 
-                {/* Right controls */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, pr: 2.5 }}>
-                    {/* Live dot */}
+                {/* Right controls — always visible, flex-shrink 0 */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, pr: 2, flexShrink: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
-                        <Box sx={{
-                            width: 8, height: 8, borderRadius: '50%', bgcolor: '#2ecc71',
-                            boxShadow: '0 0 6px #2ecc71'
-                        }} />
-                        <Typography sx={{ color: '#2ecc71', fontSize: '0.74em', fontWeight: 700 }}>Live</Typography>
+                        <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#2ecc71', boxShadow: '0 0 5px #2ecc71' }} />
+                        <Typography sx={{ color: '#2ecc71', fontSize: '0.72em', fontWeight: 700 }}>Live</Typography>
                     </Box>
-
-                    {/* Time */}
-                    <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.74em', fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72em', fontFamily: 'monospace' }}>
                         {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })} UTC
                     </Typography>
-
-                    {/* Notification + avatar icons */}
-                    <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '1.05em', cursor: 'pointer', '&:hover': { color: '#fff' } }}>
-                        🔔
+                    <Typography onClick={() => setActiveTab(4)}
+                        sx={{ color: notifications.length > 0 ? '#f39c12' : 'rgba(255,255,255,0.45)', fontSize: '1em', cursor: 'pointer' }}>
+                        🔔{notifications.length > 0 && <span style={{ fontSize: '0.6em', verticalAlign: 'top', color: '#e74c3c' }}>{notifications.length}</span>}
                     </Typography>
-                    <Box sx={{
-                        width: 28, height: 28, borderRadius: '50%', bgcolor: '#4a90e2',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
-                    }}>
-                        <Typography sx={{ color: '#fff', fontSize: '0.7em', fontWeight: 800 }}>KK</Typography>
+                    <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: '#4a90e2', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <Typography sx={{ color: '#fff', fontSize: '0.65em', fontWeight: 800 }}>KK</Typography>
                     </Box>
                 </Box>
             </Box>
 
-            {/* ── Metrics Ticker Bar (index bar style) ── */}
+            {/* ── Metrics Ticker Bar ── */}
             <Box sx={{
                 bgcolor: tickerBg,
                 display: 'flex', alignItems: 'center',
                 borderBottom: `1px solid ${borderNav}`,
-                minHeight: 34, flexShrink: 0,
-                overflowX: 'auto', '&::-webkit-scrollbar': { height: 2 }
+                minHeight: 32, flexShrink: 0,
+                overflowX: 'auto', '&::-webkit-scrollbar': { height: 0 }
             }}>
                 {tickerItems.length === 0 ? (
-                    <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72em', px: 2 }}>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7em', px: 2 }}>
                         Loading metrics…
                     </Typography>
                 ) : tickerItems.map((item, i) => (
                     <React.Fragment key={i}>
-                        <Box sx={{ px: 2, display: 'flex', alignItems: 'center', gap: 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                            <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72em' }}>
-                                {item.label}
-                            </Typography>
-                            <Typography sx={{ color: item.color, fontSize: '0.76em', fontWeight: 700 }}>
-                                {item.dir} {item.value}
-                            </Typography>
+                        <Box sx={{ px: 1.8, display: 'flex', alignItems: 'center', gap: 0.8, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7em' }}>{item.label}</Typography>
+                            <Typography sx={{ color: item.color, fontSize: '0.74em', fontWeight: 700 }}>{item.dir} {item.value}</Typography>
                         </Box>
-                        {i < tickerItems.length - 1 && (
-                            <Box sx={{ width: 1, height: 18, bgcolor: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
-                        )}
+                        {i < tickerItems.length - 1 && <Box sx={{ width: 1, height: 16, bgcolor: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />}
                     </React.Fragment>
                 ))}
             </Box>

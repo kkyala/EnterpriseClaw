@@ -151,7 +151,7 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                         fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#4a90e2' }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: true,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: isDark ? '#aaa' : '#555', font: { size: 11 } } } },
                     scales: {
                         x: { ticks: { color: isDark ? '#666' : '#888' }, grid: { color: isDark ? '#1e2030' : '#e8edf5' } },
@@ -170,7 +170,7 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                         backgroundColor: ['#2ecc71','#e74c3c','#f39c12','#3498db','#9b59b6'] }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: true,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { color: isDark ? '#aaa' : '#555', font: { size: 10 }, boxWidth: 12, padding: 8 } } }
                 }
             });
@@ -389,7 +389,9 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                             <Card sx={{ bgcolor: cardBg, border: `1px solid ${cardBdr}` }}>
                                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                                     <Typography sx={{ fontSize: '0.8em', fontWeight: 600, color: textClr, mb: 1 }}>Task Volume</Typography>
-                                    <canvas ref={volumeRef} />
+                                    <Box sx={{ position: 'relative', height: 160 }}>
+                                        <canvas ref={volumeRef} style={{ maxHeight: 160 }} />
+                                    </Box>
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -397,7 +399,9 @@ function Dashboard({ refreshKey, isDark, onNavigate }) {
                             <Card sx={{ bgcolor: cardBg, border: `1px solid ${cardBdr}` }}>
                                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                                     <Typography sx={{ fontSize: '0.8em', fontWeight: 600, color: textClr, mb: 1 }}>Status Distribution</Typography>
-                                    <canvas ref={statusRef} />
+                                    <Box sx={{ position: 'relative', height: 160 }}>
+                                        <canvas ref={statusRef} style={{ maxHeight: 160 }} />
+                                    </Box>
                                 </CardContent>
                             </Card>
                         </Grid>

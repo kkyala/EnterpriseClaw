@@ -211,12 +211,17 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                         + ADD
                     </Button>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 0.5, pb: 0.5, overflowX: 'auto', '&::-webkit-scrollbar': { height: 2 } }}>
+                <Box sx={{
+                    display: 'flex', gap: 0.5, pb: 0.5,
+                    overflowX: 'auto', flexWrap: 'nowrap',
+                    '&::-webkit-scrollbar': { height: 2 },
+                    '&::-webkit-scrollbar-thumb': { bgcolor: '#4a5568', borderRadius: 1 }
+                }}>
                     {categories.map((cat, i) => (
                         <Box key={cat} onClick={() => setCategoryTab(i)}
                             sx={{
-                                px: 1.2, py: 0.4, borderRadius: 1, cursor: 'pointer',
-                                fontSize: '0.68em', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                                px: 1, py: 0.35, borderRadius: 1, cursor: 'pointer',
+                                fontSize: '0.66em', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
                                 bgcolor: categoryTab === i ? '#4a90e2' : (isDark ? '#1e2030' : '#e2e8f0'),
                                 color: categoryTab === i ? '#fff' : labelColor,
                                 transition: 'all 0.15s',
