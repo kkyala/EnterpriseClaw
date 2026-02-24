@@ -2,7 +2,7 @@ const {
     Typography, Button, TextField, List, ListItem,
     CircularProgress, Box, Select, MenuItem, FormControl, Chip, Divider,
     Dialog, DialogTitle, DialogContent, DialogActions, FormGroup, FormControlLabel,
-    Checkbox, InputLabel
+    Checkbox, InputLabel, IconButton, Tooltip
 } = MaterialUI;
 
 const PERSONA_TEMPLATES = [
@@ -93,6 +93,29 @@ function AddAgentDialog({ open, onClose, onAgentCreated }) {
     );
 }
 
+/* ─────────────────────── AGENT ICONS ─────────────────────── */
+const AGENT_ICONS = {
+    'recruitment':    '👥',
+    'hr':             '👥',
+    'manufacturing':  '🏭',
+    'supply':         '📦',
+    'general':        '🤖',
+    'finance':        '💰',
+    'compliance':     '🛡️',
+    'communications': '📧',
+    'test':           '🧪',
+    'data':           '📊',
+};
+
+function getAgentIcon(name) {
+    const lower = name.toLowerCase();
+    for (const [key, icon] of Object.entries(AGENT_ICONS)) {
+        if (lower.includes(key)) return icon;
+    }
+    return '🤖';
+}
+
+/* ─────────────────────── SIDEBAR ─────────────────────── */
 function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser, onTaskSubmit, isDark, setIsDark }) {
     const [agents, setAgents] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
@@ -100,6 +123,7 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
     const [addDialogOpen, setAddDialogOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
     const [categoryTab, setCategoryTab] = React.useState(0);
+    const [collapsed, setCollapsed] = React.useState(false);
 
     React.useEffect(() => {
         fetch('/api/agents').then(r => r.json()).then(d => { setAgents(d); setLoading(false); }).catch(() => setLoading(false));
@@ -133,7 +157,6 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
     const getColor    = (name) => agentColors[name.length % agentColors.length];
     const getInitials = (name) => name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
-    // Deterministic simulated performance per agent (seeded by name)
     const getPerf = (agent) => {
         const h = agent.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
         const rate   = 45 + (h % 50);
@@ -141,16 +164,98 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
         return { rate, change, isUp: change >= 0 };
     };
 
+    const FULL_W = 300;
+    const MINI_W = 56;
+    const sideW  = collapsed ? MINI_W : FULL_W;
+
+    /* ═══════ COLLAPSED VIEW ═══════ */
+    if (collapsed) {
+        return (
+            <Box sx={{
+                width: MINI_W, minWidth: MINI_W,
+                bgcolor: sidebarBg,
+                display: 'flex', flexDirection: 'column',
+                borderRight: `1px solid ${borderColor}`,
+                alignItems: 'center', py: 1,
+                overflow: 'hidden'
+            }}>
+                {/* Expand button */}
+                <Tooltip title="Expand sidebar" placement="right">
+                    <Box onClick={() => setCollapsed(false)}
+                        sx={{ cursor: 'pointer', mb: 1, fontSize: '1.2em', p: 0.5, borderRadius: 1, '&:hover': { bgcolor: isDark ? '#1e2030' : '#e2e8f0' } }}>
+                        ☰
+                    </Box>
+                </Tooltip>
+
+                {/* GENi mini logo */}
+                <Typography sx={{
+                    fontWeight: 900, fontSize: '0.85em', mb: 1.5,
+                    background: 'linear-gradient(135deg, #4a90e2, #9b59b6)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                }}>
+                    G
+                </Typography>
+
+                <Divider sx={{ width: '70%', borderColor, mb: 1 }} />
+
+                {/* Agent icons */}
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3, '&::-webkit-scrollbar': { width: 0 } }}>
+                    {loading ? <CircularProgress size={18} sx={{ mt: 2 }} /> : filteredAgents.map(agent => {
+                        const color = getColor(agent.name);
+                        const isSel = selectedAgent === agent.name;
+                        const icon  = getAgentIcon(agent.name);
+                        return (
+                            <Tooltip key={agent.name} title={agent.name} placement="right">
+                                <Box onClick={() => setSelectedAgent(agent.name)}
+                                    sx={{
+                                        width: 36, height: 36, borderRadius: '50%',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1em', cursor: 'pointer',
+                                        bgcolor: isSel ? `${color}30` : 'transparent',
+                                        border: isSel ? `2px solid ${color}` : '2px solid transparent',
+                                        transition: 'all 0.15s',
+                                        '&:hover': { bgcolor: `${color}20` }
+                                    }}>
+                                    {icon}
+                                </Box>
+                            </Tooltip>
+                        );
+                    })}
+                </Box>
+
+                <Divider sx={{ width: '70%', borderColor, mt: 1, mb: 1 }} />
+
+                {/* Bottom icons */}
+                <Tooltip title="Add agent" placement="right">
+                    <Box onClick={() => setAddDialogOpen(true)}
+                        sx={{ cursor: 'pointer', fontSize: '1em', p: 0.5, borderRadius: 1, color: '#4a90e2', '&:hover': { bgcolor: isDark ? '#1e2030' : '#e2e8f0' } }}>
+                        ➕
+                    </Box>
+                </Tooltip>
+                <Tooltip title={isDark ? 'Light mode' : 'Dark mode'} placement="right">
+                    <Box onClick={() => setIsDark(!isDark)}
+                        sx={{ cursor: 'pointer', fontSize: '1em', p: 0.5, borderRadius: 1, mt: 0.5, '&:hover': { bgcolor: isDark ? '#1e2030' : '#e2e8f0' } }}>
+                        {isDark ? '☀️' : '🌙'}
+                    </Box>
+                </Tooltip>
+
+                <AddAgentDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} onAgentCreated={handleAgentCreated} />
+            </Box>
+        );
+    }
+
+    /* ═══════ EXPANDED VIEW ═══════ */
     return (
         <Box sx={{
-            width: 320, minWidth: 320,
+            width: FULL_W, minWidth: FULL_W,
             bgcolor: sidebarBg,
             display: 'flex', flexDirection: 'column',
             borderRight: `1px solid ${borderColor}`,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            transition: 'width 0.2s'
         }}>
             {/* ── Header ── */}
-            <Box sx={{ p: '12px 16px', borderBottom: `1px solid ${borderColor}` }}>
+            <Box sx={{ p: '10px 14px', borderBottom: `1px solid ${borderColor}` }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     {/* Brand */}
                     <Box>
@@ -193,36 +298,40 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
 
                 {/* Search bar */}
                 <TextField
-                    placeholder="Search for agents to deploy..."
+                    placeholder="Search agents..."
                     size="small" fullWidth value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.8em' } }}
-                    InputProps={{ startAdornment: <span style={{ marginRight: 6, color: labelColor }}>🔍</span> }}
+                    sx={{ mt: 1.2, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.78em', height: 32 } }}
+                    InputProps={{ startAdornment: <span style={{ marginRight: 5, color: labelColor, fontSize: '0.85em' }}>🔍</span> }}
                 />
             </Box>
 
             {/* ── Category tabs + section header ── */}
-            <Box sx={{ px: 1.5, pt: 1, pb: 0.5, borderBottom: `1px solid ${borderColor}` }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
-                    <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, fontSize: '0.62em', textTransform: 'uppercase' }}>
+            <Box sx={{ px: 1.2, pt: 0.8, pb: 0.4, borderBottom: `1px solid ${borderColor}` }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.6 }}>
+                    <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, fontSize: '0.6em', textTransform: 'uppercase' }}>
                         AI Workforce
                     </Typography>
-                    <Button size="small" variant="outlined" onClick={() => setAddDialogOpen(true)}
-                        sx={{ fontSize: '0.65em', minWidth: 'auto', borderColor: '#4a90e2', color: '#4a90e2', py: 0.2, px: 0.8 }}>
-                        + ADD
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                        <Button size="small" variant="outlined" onClick={() => setAddDialogOpen(true)}
+                            sx={{ fontSize: '0.6em', minWidth: 'auto', borderColor: '#4a90e2', color: '#4a90e2', py: 0.1, px: 0.6, height: 20 }}>
+                            + ADD
+                        </Button>
+                        {/* Collapse button */}
+                        <Tooltip title="Collapse sidebar">
+                            <Box onClick={() => setCollapsed(true)}
+                                sx={{ cursor: 'pointer', fontSize: '0.75em', color: labelColor, px: 0.3, '&:hover': { color: '#4a90e2' } }}>
+                                ◀
+                            </Box>
+                        </Tooltip>
+                    </Box>
                 </Box>
-                <Box sx={{
-                    display: 'flex', gap: 0.5, pb: 0.5,
-                    overflowX: 'auto', flexWrap: 'nowrap',
-                    '&::-webkit-scrollbar': { height: 2 },
-                    '&::-webkit-scrollbar-thumb': { bgcolor: '#4a5568', borderRadius: 1 }
-                }}>
+                <Box sx={{ display: 'flex', gap: 0.4, pb: 0.4, overflow: 'hidden' }}>
                     {categories.map((cat, i) => (
                         <Box key={cat} onClick={() => setCategoryTab(i)}
                             sx={{
-                                px: 1, py: 0.35, borderRadius: 1, cursor: 'pointer',
-                                fontSize: '0.66em', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                                px: 0.8, py: 0.3, borderRadius: 1, cursor: 'pointer',
+                                fontSize: '0.62em', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
                                 bgcolor: categoryTab === i ? '#4a90e2' : (isDark ? '#1e2030' : '#e2e8f0'),
                                 color: categoryTab === i ? '#fff' : labelColor,
                                 transition: 'all 0.15s',
@@ -233,8 +342,8 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                 </Box>
             </Box>
 
-            {/* ── Agent list (watchlist style) ── */}
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
+            {/* ── Agent list ── */}
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 0 } }}>
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress size={24} /></Box>
                 ) : filteredAgents.length === 0 ? (
@@ -247,42 +356,41 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                             const perf = getPerf(agent);
                             const color = getColor(agent.name);
                             const isSel = selectedAgent === agent.name;
+                            const icon  = getAgentIcon(agent.name);
                             return (
                                 <ListItem key={agent.name} button onClick={() => setSelectedAgent(agent.name)}
                                     sx={{
-                                        py: 1, px: 1.5,
+                                        py: 0.8, px: 1.2,
                                         borderLeft: isSel ? `3px solid ${color}` : '3px solid transparent',
                                         bgcolor: isSel ? (isDark ? '#1a2040' : '#dbeafe') : 'transparent',
                                         borderBottom: `1px solid ${borderColor}`,
                                         '&:hover': { bgcolor: isDark ? '#1a1c2e' : '#f0f4ff' }
                                     }}>
-                                    {/* Avatar circle */}
+                                    {/* Icon */}
                                     <Box sx={{
-                                        width: 34, height: 34, borderRadius: '50%', bgcolor: color,
+                                        width: 30, height: 30, borderRadius: '50%', bgcolor: `${color}20`,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        mr: 1.2, flexShrink: 0
+                                        mr: 1, flexShrink: 0, fontSize: '0.85em'
                                     }}>
-                                        <Typography sx={{ color: '#fff', fontSize: '0.68em', fontWeight: 800 }}>
-                                            {getInitials(agent.name)}
-                                        </Typography>
+                                        {icon}
                                     </Box>
 
                                     {/* Name + tools */}
                                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                                        <Typography sx={{ fontSize: '0.82em', fontWeight: 600, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <Typography sx={{ fontSize: '0.78em', fontWeight: 600, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {agent.name}
                                         </Typography>
-                                        <Typography sx={{ fontSize: '0.64em', color: labelColor }}>
-                                            {agent.tools ? `${agent.tools.length} tools` : 'No tools'} · AI Core
+                                        <Typography sx={{ fontSize: '0.6em', color: labelColor }}>
+                                            {agent.tools ? `${agent.tools.length} tools` : '—'} · AI
                                         </Typography>
                                     </Box>
 
                                     {/* Performance */}
                                     <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                                        <Typography sx={{ fontSize: '0.82em', fontWeight: 700, color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
+                                        <Typography sx={{ fontSize: '0.78em', fontWeight: 700, color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
                                             {perf.rate}%
                                         </Typography>
-                                        <Typography sx={{ fontSize: '0.63em', color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
+                                        <Typography sx={{ fontSize: '0.58em', color: perf.isUp ? '#2ecc71' : '#e74c3c' }}>
                                             {perf.isUp ? '▲' : '▼'} {Math.abs(perf.change)}%
                                         </Typography>
                                     </Box>
@@ -294,32 +402,27 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
             </Box>
 
             {/* ── Column footer ── */}
-            <Box sx={{
-                px: 1.5, py: 0.8, borderTop: `1px solid ${borderColor}`,
-                display: 'flex', justifyContent: 'space-between',
-                bgcolor: footerBg
-            }}>
-                <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Agent Name</Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Rate</Typography>
-                    <Typography sx={{ fontSize: '0.63em', color: labelColor, fontWeight: 600 }}>Chg%</Typography>
-                    <Typography sx={{ fontSize: '0.63em', color: labelColor }}>⚙</Typography>
+            <Box sx={{ px: 1.2, py: 0.5, borderTop: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', bgcolor: footerBg }}>
+                <Typography sx={{ fontSize: '0.58em', color: labelColor, fontWeight: 600 }}>Agent</Typography>
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                    <Typography sx={{ fontSize: '0.58em', color: labelColor, fontWeight: 600 }}>Rate</Typography>
+                    <Typography sx={{ fontSize: '0.58em', color: labelColor, fontWeight: 600 }}>Chg%</Typography>
                 </Box>
             </Box>
 
             {/* ── Dispatch Task ── */}
-            <Box sx={{ borderTop: `1px solid ${borderColor}`, p: 1.5, bgcolor: footerBg }}>
-                <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, display: 'block', mb: 0.8, fontSize: '0.6em', textTransform: 'uppercase' }}>
+            <Box sx={{ borderTop: `1px solid ${borderColor}`, p: 1.2, bgcolor: footerBg }}>
+                <Typography sx={{ fontWeight: 700, color: labelColor, letterSpacing: 1.5, display: 'block', mb: 0.6, fontSize: '0.58em', textTransform: 'uppercase' }}>
                     Dispatch Task
                 </Typography>
-                {selectedAgent && <Chip label={selectedAgent} size="small" color="primary" sx={{ mb: 0.8, fontSize: '0.7em' }} />}
+                {selectedAgent && <Chip label={selectedAgent} size="small" color="primary" sx={{ mb: 0.6, fontSize: '0.65em', height: 20 }} />}
                 <TextField multiline rows={2} fullWidth placeholder="Describe the task..."
                     value={task} onChange={(e) => setTask(e.target.value)}
                     onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTaskSubmit(); } }}
                     variant="outlined" size="small"
-                    sx={{ mb: 0.8, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.8em' } }} />
+                    sx={{ mb: 0.6, '& .MuiOutlinedInput-root': { bgcolor: inputBg, fontSize: '0.78em' } }} />
                 <Button variant="contained" fullWidth onClick={handleTaskSubmit} size="small"
-                    sx={{ background: 'linear-gradient(135deg, #4a90e2, #6c5ce7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.75em' }}>
+                    sx={{ background: 'linear-gradient(135deg, #4a90e2, #6c5ce7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.72em' }}>
                     Execute Task
                 </Button>
             </Box>
