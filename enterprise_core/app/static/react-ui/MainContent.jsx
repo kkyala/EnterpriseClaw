@@ -29,6 +29,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
         { label: 'Workflows', id: 8, icon: '🔄' },
         { label: 'Schedule', id: 9, icon: '📅' },
         { label: 'Groups', id: 10, icon: '👥' },
+        { label: 'Integrations', id: 11, icon: '🔌' },
         { label: 'Comms', id: 6, icon: '💬' },
         { label: `Alerts${notifications.length > 0 ? ` (${notifications.length})` : ''}`, id: 4, icon: '🔔' },
         { label: `Events${events.length > 0 ? ` (${events.length})` : ''}`, id: 5, icon: '📡' },
@@ -124,7 +125,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     </Typography>
                 ) : tickerItems.map((item, i) => (
                     <React.Fragment key={i}>
-                        <Box sx={{ px: 1.8, display: 'flex', alignItems: 'center', gap: 0.8, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        <Box sx={{ px: 3, display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap', flexShrink: 0 }}>
                             <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7em' }}>{item.label}</Typography>
                             <Typography sx={{ color: item.color, fontSize: '0.74em', fontWeight: 700 }}>{item.dir} {item.value}</Typography>
                         </Box>
@@ -148,6 +149,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {activeTab === 8 && <Workflows isDark={isDark} refreshKey={refreshKey} />}
                     {activeTab === 9 && <ScheduledTasks isDark={isDark} refreshKey={refreshKey} />}
                     {activeTab === 10 && <AgentGroups isDark={isDark} refreshKey={refreshKey} />}
+                    {activeTab === 11 && <Integrations isDark={isDark} refreshKey={refreshKey} />}
                 </Box>
 
                 {/* Right panel — only on Dashboard tab */}
