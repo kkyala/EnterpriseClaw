@@ -168,20 +168,21 @@ function Sidebar({ selectedAgent, setSelectedAgent, currentUser, setCurrentUser,
                             <span style={{ color: subText }}>lobal </span>
                             <span style={{ borderBottom: '2px solid #9b59b6', paddingBottom: '1px', fontWeight: 800, color: '#9b59b6' }}>E</span>
                             <span style={{ color: subText }}>nterprise </span>
-                            <span style={{ borderBottom: '2px solid #e74c3c', paddingBottom: '1px', fontWeight: 800, color: '#e74c3c' }}>N</span>
+                            <span style={{ borderBottom: '2px solid #f39c12', paddingBottom: '1px', fontWeight: 800, color: '#f39c12' }}>N</span>
                             <span style={{ color: subText }}>eural - intelligence</span>
                         </Box>
                     </Box>
 
                     {/* Controls */}
-                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', position: 'relative', zIndex: 10 }}>
                         <Button size="small" onClick={() => setIsDark(!isDark)}
                             sx={{ minWidth: 28, p: 0.5, fontSize: '1em' }}>
                             {isDark ? '☀️' : '🌙'}
                         </Button>
-                        <FormControl size="small" sx={{ minWidth: 80 }}>
+                        <FormControl size="small" sx={{ minWidth: 90 }}>
                             <Select value={currentUser} onChange={(e) => setCurrentUser(e.target.value)}
-                                sx={{ fontSize: '0.7em', height: 28, '.MuiOutlinedInput-notchedOutline': { borderColor } }}>
+                                sx={{ fontSize: '0.72em', height: 28, '.MuiOutlinedInput-notchedOutline': { borderColor } }}
+                                MenuProps={{ sx: { zIndex: 1400 } }}>
                                 <MenuItem value="viewer_user">Viewer</MenuItem>
                                 <MenuItem value="analyst_user">Analyst</MenuItem>
                                 <MenuItem value="admin_user">Admin</MenuItem>

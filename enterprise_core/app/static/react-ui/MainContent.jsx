@@ -53,7 +53,7 @@ function MainContent({ events, refreshKey, selectedAgent, notifications, onClear
                     {navItems.map((item) => (
                         <Box key={item.id} onClick={() => setActiveTab(item.id)}
                             sx={{
-                                px: 2, display: 'flex', alignItems: 'center',
+                                px: 1.4, display: 'flex', alignItems: 'center',
                                 cursor: 'pointer', position: 'relative',
                                 color: activeTab === item.id ? '#4a90e2' : 'rgba(255,255,255,0.65)',
                                 fontWeight: activeTab === item.id ? 700 : 400,
